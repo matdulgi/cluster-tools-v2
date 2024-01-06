@@ -1,6 +1,13 @@
-- scala version : 2.13.10
-- java version : 8
-- sbt version : 
+# Cluster Tools
+
+### versions
+- scala 2.13.10 
+- java 1.8     
+- sbt 1.9.8  
+
+### Prerequisites
+- ssh key change
+- set PATH environment variable to use **cltls** command
 
 
 # Usage
@@ -8,19 +15,19 @@
 cltls [parr] &lt;cmd> &lt;target> [args]
 ```
 
-### e.g. Commands
+### Commands
 - cltls cmd all ls -al  
 - cltls cp all ~/goodday.txt
 
 - cltls sync all 
 
-### e.g. Parallel Commands
+### Parallel Commands
 
 - cltls par cmd all ls -al
 - cltls par cp all ~/goodday.txt
 - cltls par sync all 
 
-### e.g. Tools
+### Tools
 - cltls ssh key exchange
 - cltls hosts 
 

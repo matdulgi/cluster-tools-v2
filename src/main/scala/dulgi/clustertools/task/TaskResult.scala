@@ -8,12 +8,11 @@ case class SequentialTaskResult(nodeName: String, exitCode: Int, stdout: String,
     exitCode match {
       case 0 =>
         println(s"task in ${nodeName} has finished ")
-        println("output:")
+
         println(stdout)
 
       case _ =>
         println(s"task Failed with exitcode ${exitCode}")
-        println("output:")
         println(stderr)
     }
   }

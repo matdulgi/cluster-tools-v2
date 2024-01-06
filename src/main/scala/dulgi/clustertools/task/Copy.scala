@@ -40,8 +40,8 @@ class Copy(targetNode: Node, args: Seq[String]) extends Task(targetNode){
       (e: String) => errorBuffer.append(e + "\n")
     )
 
-    logger.out(s"$taskName started in ${targetNode.name} for command: [ ${sshCommand.mkString(" ")} ]")
-    logger.err(s"$taskName started in ${targetNode.name} for command: [ ${sshCommand.mkString(" ")} ]")
+    logger.out(s"$taskName in ${targetNode.name} [ ${sshCommand.mkString(" ")} ]")
+    logger.err(s"$taskName in ${targetNode.name} [ ${sshCommand.mkString(" ")} ]")
     val exitCode = sshCommand ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
