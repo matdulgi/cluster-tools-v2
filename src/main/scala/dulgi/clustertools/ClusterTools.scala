@@ -14,12 +14,7 @@ object ClusterTools {
   }
 
   def run(args: Array[String], configPath: String = ""): Unit = {
-    import pureconfig.generic.ProductHint
-    import pureconfig.generic.auto._
-    import pureconfig.{CamelCase, ConfigFieldMapping, ConfigReader, ConfigSource}
-    implicit def camelCaseHint[T]: ProductHint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
-
-    val globalConfig = if(configPath != "") Env.getConfigOrThrow[Config](configPath) else Env.config
+    val globalConfig = if(configPath != "") Env.getConfigOrThrowOnDemand(configPath) else Env.config
 
     val (isParCmd, parProcessedArgs) = if(args(0) == "par") (true, args.tail) else (false, args)
 
@@ -42,11 +37,11 @@ object ClusterTools {
     val tasks = filteredTargetNodes.map{ node =>
       (isParCmd, taskStr) match {
         case (false, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
+        case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
         case (true, "cmd") => new ParallelCommand(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        case (true, "cp") => new ParallelCopy(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        case (true, "sync") => new ParallelSync(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (true, "cp") => new ParallelCopy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
+        case (true, "sync") => new ParallelSync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
       }
     }
 

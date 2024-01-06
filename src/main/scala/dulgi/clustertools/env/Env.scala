@@ -20,5 +20,10 @@ object Env {
     config
   }
 
+  def getConfigOrThrowOnDemand(path: String): Config = {
+    implicit def camelCaseHint[T]: ProductHint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+    getConfigOrThrow[Config](path)
+  }
+
 }
 

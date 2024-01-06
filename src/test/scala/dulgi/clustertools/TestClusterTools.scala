@@ -19,7 +19,7 @@ class TestClusterTools extends AnyFlatSpec with Matchers {
     ClusterTools.run(args, "./conf/test.conf")
   }
 
-  "copy with source path only" should "works" in {
+  "copy with only source path" should "works" in {
     val args = Array("cp", "all", "~/test.txt")
     ClusterTools.run(args, "./conf/test.conf")
   }
@@ -34,4 +34,23 @@ class TestClusterTools extends AnyFlatSpec with Matchers {
     ClusterTools.run(args, "./conf/test.conf")
   }
 
+  "sync with only source path" should "works" in {
+    val args = Array("sync", "all", "~/test.txt")
+    ClusterTools.run(args, "./conf/test.conf")
+  }
+
+  "sync with with source and dest path" should "works" in {
+    val args = Array("sync", "all", "~/test.txt", "~")
+    ClusterTools.run(args, "./conf/test.conf")
+  }
+
+  "sync directory" should "works" in {
+    val args = Array("sync", "all", "~/tmp")
+    ClusterTools.run(args, "./conf/test.conf")
+  }
+
+  "parallel sync" should "works" in {
+    val args = Array("par", "sync", "all", "~/test.txt")
+    ClusterTools.run(args, "./conf/test.conf")
+  }
 }

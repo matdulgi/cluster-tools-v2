@@ -1,6 +1,9 @@
 package dulgi.clustertools.task
 
 import dulgi.clustertools.env.Node
+
+import java.nio.file.Paths
+import scala.language.postfixOps
 import scala.sys.process.ProcessLogger
 import scala.sys.process._
 
@@ -13,7 +16,7 @@ import scala.sys.process._
  * @param targetNode
  * @param args
  */
-class Copy(targetNode: Node, args: Seq[String]) extends Task(targetNode){
+class Copy(targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Task(targetNode){
   override def taskName: String = s"Copy ${super.taskName}"
 
   /**
@@ -29,11 +32,13 @@ class Copy(targetNode: Node, args: Seq[String]) extends Task(targetNode){
     val (sourcePath, destPath) = args match {
       case Seq() => throw new IllegalArgumentException("no args")
       case Seq(arg1: String) => (arg1, arg1)
-      case Seq(arg1: String, arg2: String) => (arg1, arg2)
+      case Seq(arg1: String, arg2: String) => (arg1,
+        s"$arg2/${Paths.get(arg1).getFileName.toString}"
+      )
       case Seq(arg1: String, arg2: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
     }
 
-    val sshCommand = Seq("scp", "-P", targetNode.port, sourcePath, s"${targetNode.user}@${targetNode.hostname}:$destPath")
+    val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, s"${targetNode.user}@${targetNode.hostname}:$destPath").map(resolveTilde(_)).map(resolveTildeInSshPath(_, replaceHome))
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(
       (o: String) => outputBuffer.append(o + "\n"),
