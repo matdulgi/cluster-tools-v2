@@ -9,7 +9,7 @@ class TestClusterTools extends AnyFlatSpec with Matchers {
     ClusterTools.run(args, "./conf/test.conf")
   }
 
-  "command with ~" should "works" in {
+  "command with tilde(~)" should "works" in {
     val args = Array("cmd", "all", "ls", "-al", "~")
     ClusterTools.run(args, "./conf/test.conf")
   }

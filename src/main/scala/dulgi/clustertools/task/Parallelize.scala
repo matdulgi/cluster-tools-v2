@@ -7,8 +7,8 @@ import scala.concurrent.Future
 
 object Parallelize{
   class ParallelCommand(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
-  class ParallelCopy(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
-  class ParallelSync(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
+  class ParallelCopy(override val targetNode: Node, args: Seq[String]) extends Copy(targetNode, args) with Parallelize
+  class ParallelSync(override val targetNode: Node, args: Seq[String]) extends Sync(targetNode, args) with Parallelize
 }
 
 trait Parallelize extends Task {
