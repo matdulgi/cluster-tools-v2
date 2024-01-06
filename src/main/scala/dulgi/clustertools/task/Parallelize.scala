@@ -6,12 +6,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object Parallelize{
-  class ParallelCommand(targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
+  class ParallelCommand(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
+  class ParallelCopy(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
+  class ParallelSync(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
 }
 
 trait Parallelize extends Task {
-  override def name: String = s"parallel ${super.name}"
-
+  abstract override def taskName: String = s"parallel ${super.taskName}"
   abstract override def execute(): TaskResult = {
     val result = Future {
       val sr = super.execute()
@@ -21,8 +22,6 @@ trait Parallelize extends Task {
     }
 
     ParallelTaskResult(targetNode.name, result)
-    //    (0, "", "")
-
   }
 
 }

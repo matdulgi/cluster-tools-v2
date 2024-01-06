@@ -6,6 +6,8 @@ import scala.sys.process._
 
 
 class Sync(override val targetNode: Node, args: Seq[String]) extends Task(targetNode){
+  override def taskName: String = s"Sync ${super.taskName}"
+
   override def execute(): TaskResult = {
     val (sourcePath, destPath) = args match {
       case Seq() => throw new IllegalArgumentException("no args")
@@ -35,6 +37,7 @@ class Sync(override val targetNode: Node, args: Seq[String]) extends Task(target
 
   override def onStart(): Unit = println()
   override def onFinish(): Unit = println()
+
 }
 
 

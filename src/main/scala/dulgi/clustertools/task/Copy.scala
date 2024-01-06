@@ -14,6 +14,7 @@ import scala.sys.process._
  * @param args
  */
 class Copy(targetNode: Node, args: Seq[String]) extends Task(targetNode){
+  override def taskName: String = s"Copy ${super.taskName}"
 
   /**
    * check file already exists in target node
@@ -39,8 +40,8 @@ class Copy(targetNode: Node, args: Seq[String]) extends Task(targetNode){
       (e: String) => errorBuffer.append(e + "\n")
     )
 
-    logger.out(s"task started in ${targetNode.name} for command: [ ${sshCommand.mkString(" ")} ]")
-    logger.err(s"task started in ${targetNode.name} for command: [ ${sshCommand.mkString(" ")} ]")
+    logger.out(s"$taskName started in ${targetNode.name} for command: [ ${sshCommand.mkString(" ")} ]")
+    logger.err(s"$taskName started in ${targetNode.name} for command: [ ${sshCommand.mkString(" ")} ]")
     val exitCode = sshCommand ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)

@@ -1,8 +1,8 @@
 package dulgi.clustertools
 
 import dulgi.clustertools.env.{Config, Env}
-import dulgi.clustertools.task.Parallelize.ParallelCommand
-import dulgi.clustertools.task.{Command, ParallelTaskResult, SequentialTaskResult, TaskResult}
+import dulgi.clustertools.task.Parallelize.{ParallelCommand, ParallelCopy, ParallelSync}
+import dulgi.clustertools.task.{Command, Copy, Help, ParallelTaskResult, SequentialTaskResult, Sync, TaskResult}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -10,10 +10,10 @@ import scala.concurrent.{Await, Future}
 
 object ClusterTools {
   def main(args: Array[String]): Unit = {
+    run(args)
   }
 
-
-  def run(args: Array[String], configPath: String): Unit = {
+  def run(args: Array[String], configPath: String = ""): Unit = {
     import pureconfig.generic.ProductHint
     import pureconfig.generic.auto._
     import pureconfig.{CamelCase, ConfigFieldMapping, ConfigReader, ConfigSource}
@@ -34,35 +34,39 @@ object ClusterTools {
     val targetHosts = globalConfig.groups(targetGroup)
     val targetNodes = targetHosts.map(host => globalConfig.nodes.filter(_.name == host)).flatten
 
-    val tasks = targetNodes.map{ node =>
-      (isParCmd, taskStr) match {
-        case (false, "cmd") => Command(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        //      case "cp" => new Copy
-        //      case "sync" => new Sync
-        //      case "init" => new Init
-        //      case "install" => new Install
-        case (true, "cmd") => new ParallelCommand(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-//          case (_, "help") => Help(args)
+    val filteredTargetNodes = taskStr match {
+      case "cp" | "sync" => targetNodes.filter(_.name != globalConfig.curNode)
+      case _ => targetNodes
+    }
 
+    val tasks = filteredTargetNodes.map{ node =>
+      (isParCmd, taskStr) match {
+        case (false, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (true, "cmd") => new ParallelCommand(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (true, "cp") => new ParallelCopy(node, parProcessedArgs.slice(2, parProcessedArgs.length))
+        case (true, "sync") => new ParallelSync(node, parProcessedArgs.slice(2, parProcessedArgs.length))
       }
     }
 
+    tasks.foreach(_.onStart())
     val rs = tasks.map(_.execute())
 
     rs match {
       case (sr: SequentialTaskResult) :: _ =>
         rs.map(_.asInstanceOf[SequentialTaskResult])
-          .foreach(sr =>println(s"task in ${sr.nodeName} has finished with ${sr.exitCode}"))
+          .foreach(_.printFinishInfo())
 
       case (pr: ParallelTaskResult) :: _ =>
         val pl = rs.map(_.asInstanceOf[ParallelTaskResult])
         val fl =pl.map(_.future)
         val rl = Await.result(Future.sequence(fl), Duration.Inf)
 
-        rl.foreach(sr =>println(s"task in ${sr.nodeName} has finished with ${sr.exitCode}"))
+        rl.foreach(_.printFinishInfo())
     }
-
   }
+
 
 
 
