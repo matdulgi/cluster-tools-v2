@@ -2,7 +2,6 @@
 dir=$(cd $(dirname $0)/.. && pwd)
 jar_path="$dir"/lib/cluster-tools-assembly-0.1.0-SNAPSHOT.jar
 
-echo "$dir"/conf/test.conf
 java \
   -Dconfig.file="$dir"/conf/test.conf \
   -jar "$jar_path" \

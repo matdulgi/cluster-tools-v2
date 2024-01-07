@@ -20,6 +20,7 @@ class TestCommand extends AnyFlatSpec with Matchers {
     val result = cmd.execute()
     val r = result match { case r: SequentialTaskResult => r }
 
+    println(r.stdout)
     r.exitCode should be (0)
     r.stdout should not be ("")
   }
@@ -30,6 +31,7 @@ class TestCommand extends AnyFlatSpec with Matchers {
     val result = cmd.execute()
     val r = result match { case r: SequentialTaskResult => r }
 
+    println(r.stdout)
     r.exitCode should be (0)
     r.stdout should not be ("")
   }
@@ -44,6 +46,7 @@ class TestCommand extends AnyFlatSpec with Matchers {
 
     val rr = f.value.get.get
 
+    println(rr.stdout)
     rr.exitCode should be (0)
     rr.stdout should not be ("")
   }

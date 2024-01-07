@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future}
 
 object ClusterTools {
   def main(args: Array[String]): Unit = {
-    println("Have a good day")
+//    println("Have a good day")
     bootstrap(args)
   }
 
@@ -22,6 +22,8 @@ object ClusterTools {
       case e: IllegalArgumentException =>
         println(e.getMessage)
         Help.rootHelp.help()
+      case e: NoSuchElementException =>
+        println(e.getMessage)
       case _: HelpException =>
         Help.rootHelp.help()
     }
@@ -45,7 +47,7 @@ object ClusterTools {
     val targetHosts = try {
       globalConfig.groups(targetGroup)
     } catch {
-      case _ => throw new IllegalArgumentException(s"group $targetGroup isn't specified")
+      case _ => throw new NoSuchElementException(s"group [ $targetGroup ] does not exist")
     }
 
     val targetNodes = targetHosts.map(host => globalConfig.nodes.filter(_.name == host)).flatten
@@ -72,7 +74,7 @@ object ClusterTools {
         println(s"some nodes has that file already : [ ${targets.map(_.nodeName).mkString(", ")} ]")
 
         def prompt(): Unit = {
-          print("will you overwrite it?: (y/n)")
+          print("will you overwrite it?: (y/n) ")
           val input = scala.io.StdIn.readLine()
           input match {
             case "y" => ()
@@ -89,15 +91,13 @@ object ClusterTools {
     tasks.foreach(_.onFinish())
 
     rs match {
-      case (sr: SequentialTaskResult) :: _ =>
-        rs.map(_.asInstanceOf[SequentialTaskResult])
+      case (_: SequentialTaskResult) :: _  =>
+        rs.map{ case r: SequentialTaskResult => r }
           .foreach(_.printFinishInfo())
 
-      case (pr: ParallelTaskResult) :: _ =>
-        val pl = rs.map(_.asInstanceOf[ParallelTaskResult])
-        val fl =pl.map(_.future)
+      case (_: ParallelTaskResult) :: _ =>
+        val fl = rs.map{ case r: ParallelTaskResult => r.future}
         val rl = Await.result(Future.sequence(fl), Duration.Inf)
-
         rl.foreach(_.printFinishInfo())
     }
   }

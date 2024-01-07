@@ -22,22 +22,17 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
     assert(result == s"/home/${node.user}")
   }
 
-  "tilde in ssh path" should "replaced with dest system path" in {
+  "home path in ssh path" should "replaced with dest system path" in {
     val configPath = "./conf/test.conf"
     val config =  Env.getConfigOrThrowOnDemand(configPath)
     val node = config.nodes(0)
-
-    val inputPath = s"${node.user}@${node.hostname}:~/path"
 
     val task = new RemoteTask(node) {
       override def execute(): TaskResult = SequentialTaskResult("test", 0, "", "")
     }
 
-    val resolvedPath = task.resolveTildeInSshPath(inputPath, true)
-    assert( s"${node.user}@${node.hostname}:/home/${node.user}/path" == resolvedPath)
-
+    val resolvedPath = task.remoteHomePath
+    assert( s"/home/${node.user}" == resolvedPath)
   }
-
-
 
 }

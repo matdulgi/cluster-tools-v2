@@ -36,14 +36,6 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
 
   override def taskName: String = s"Copy ${super.taskName}"
 
-  /**
-   * convert file path as remote ssh path format
-   * @param path
-   * @return
-   */
-  private def toRemoteSshPath(path: String): String =
-    s"${targetNode.user}@${targetNode.hostname}:$path"
-//    ${Paths.get(path).getFileName.toString}
 
   /**
    * check if file already exists in target node
@@ -53,13 +45,19 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
    * @return
    */
   def seek(): SequentialTaskResult = {
-    val r = new Command(targetNode, Seq("ls", sourcePath), convertHomePath).execute()
+    val t = new Command(targetNode, Seq("ls", sourcePath), convertHomePath)
+    val r = t.execute()
+
+    // caching
+    if(sourcePath.contains(System.getProperty("user.home")))
+      this._remoteHomePathCache = t.remoteHomePath
+
     r match { case r: SequentialTaskResult => r }
   }
 
   override def execute(): TaskResult = {
     val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, destPath)
-    val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_)) else sshCommand
+    val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_, _remoteHomePathCache)) else sshCommand
     val recursiveOptionResolved = if (new File(sourcePath).isDirectory)
       homePathResolved.head +: "-r" +: homePathResolved.tail
     else homePathResolved

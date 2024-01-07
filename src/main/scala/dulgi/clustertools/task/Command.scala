@@ -8,7 +8,6 @@ class Command(targetNode: Node, args: Seq[String], convertHomePath: Boolean) ext
   override def taskName: String = s"Command ${super.taskName}"
   override def execute(): TaskResult = {
     val sshCommand = Seq("ssh", "-p", targetNode.port.toString, s"${targetNode.user}@${targetNode.hostname}") ++ args
-//    val tildeResolved = sshCommand.map(resolveTilde(_, convertHomePath))
     val homePathResolved = if(convertHomePath) sshCommand.map(replaceLocalHomePath(_)) else sshCommand
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(

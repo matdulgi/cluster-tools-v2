@@ -6,11 +6,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 
-import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 import scala.concurrent.Await
-import scala.reflect.internal.util.FileUtils
-import scala.util.Using
+
 
 class TestCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
@@ -34,6 +32,7 @@ class TestCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
     val args = Array(fileName)
     val copy = new Copy(testNode, args, true)
     val result = copy.execute()
+
     val r = result match {
       case r: SequentialTaskResult => r
     }
@@ -41,6 +40,7 @@ class TestCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
     r.exitCode should be(0)
     r.stdout should not be ""
   }
+
 
   "copy with source and dest path" should "finish with code 0" in {
     val args = Array(fileName, fileName2)

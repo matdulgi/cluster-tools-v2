@@ -24,7 +24,7 @@ abstract class Task {
 object RemoteTask {
   def getRemoteHomePath(port: Int, user: String, hostname: String): String = {
     import scala.sys.process._
-    println(s"getting remote home path for $user@$hostname:$port...")
+    println(s"getting remote home path for $user@$hostname:$port... in")
     val homePath = (s"ssh -p $port $user@$hostname" + " 'echo $HOME'").!!.trim
     homePath
   }
@@ -34,6 +34,8 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
   lazy val remoteHomePath = getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
 
   override def execute(): TaskResult
+
+  @Deprecated
   def resolveTilde(str: String, convertHomePath: Boolean = false): String = {
     if(convertHomePath == true) {
       str.replaceAll("^~", RemoteTask.getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname))
@@ -55,6 +57,17 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
     }
     else str
   }
+
+
+  /**
+   * convert file path as remote ssh path format
+   *
+   * @param path
+   * @return
+   */
+  protected def toRemoteSshPath(path: String): String =
+    s"${targetNode.user}@${targetNode.hostname}:$path"
+
 
   /**
    * replace home path in start of string
@@ -78,8 +91,10 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
    * @param path
    * @return
    */
-  def replaceRemoteHomePath(path: String): String = {
+  def replaceRemoteHomePath(path: String, cache: String = ""): String = {
     val homePath = System.getProperty("user.home")
+
+    val rhp = if (cache == "") remoteHomePath else cache
 
     val sshPathRegex = "([a-zA-Z0-9_-]+)@([a-zA-Z0-9.-]+):(.*)".r
     sshPathRegex.replaceAllIn(path, m => {
@@ -87,11 +102,10 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
       val domain = m.group(2)
       val path = m.group(3)
       s"$username@$domain:${
-        path.replaceFirst(homePath, remoteHomePath)
+        path.replaceFirst(homePath, rhp)
       }"
     })
   }
-
 
 }
 
