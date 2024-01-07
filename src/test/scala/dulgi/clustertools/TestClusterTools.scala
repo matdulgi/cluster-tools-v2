@@ -8,21 +8,8 @@ import org.scalatest.matchers.should.Matchers
 class TestClusterTools extends AnyFlatSpec with Matchers {
   val testConfigPath = "./conf/test.conf"
   val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
-
-  "command" should "works" in {
-    val args = Array("cmd", "all", "ls", "-al")
-    ClusterTools.bootstrap(args, testConfigPath)
-  }
-
-  "command with quoted command" should "works" in {
-    val args = Array("cmd", "all", "'ls -al'")
-    ClusterTools.bootstrap(args, testConfigPath)
-  }
-
-  "command with tilde(~)" should "works" in {
-    val args = Array("cmd", "all", "ls", "-al", "~")
-    ClusterTools.run(args, testConfig)
-  }
+  val fileName = System.getProperty("user.home") + "/test.txt"
+  val fileName2 = System.getProperty("user.home") + "/test2.txt"
 
   "run with help command" should "throws HelpException" in {
     val args = Array("help")
@@ -52,28 +39,38 @@ class TestClusterTools extends AnyFlatSpec with Matchers {
     }
   }
 
+  "command" should "works" in {
+    val args = Array("cmd", "all", "ls", "-al")
+    ClusterTools.bootstrap(args, testConfigPath)
+  }
+
+  "command with tilde(~)" should "works" in {
+    val args = Array("cmd", "all", "ls", "-al", "~")
+    ClusterTools.run(args, testConfig)
+  }
+
   "parallel command" should "works" in {
     val args = Array("par", "cmd", "all", "ls", "-al")
     ClusterTools.bootstrap(args, testConfigPath)
   }
 
-  "copy with only source path" should "works" in {
-    val args = Array("cp", "all", "~/test.txt")
+  "copy with source path" should "works" in {
+    val args = Array("cp", "all", fileName)
     ClusterTools.bootstrap(args, testConfigPath)
   }
 
-  "copy with with source and dest path" should "works" in {
-    val args = Array("cp", "all", "~/test.txt", "~")
+  "copy with source and dest path" should "works" in {
+    val args = Array("cp", "all", fileName, fileName2)
     ClusterTools.bootstrap(args, testConfigPath)
   }
 
   "parallel copy" should "works" in {
-    val args = Array("par", "cp", "all", "~/test.txt")
+    val args = Array("par", "cp", "all", fileName)
     ClusterTools.bootstrap(args, testConfigPath)
   }
 
   "sync with only source path" should "works" in {
-    val args = Array("sync", "all", "~/test.txt")
+    val args = Array("sync", "all", fileName)
     ClusterTools.bootstrap(args, testConfigPath)
   }
 

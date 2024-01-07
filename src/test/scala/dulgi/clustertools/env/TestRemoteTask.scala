@@ -17,7 +17,7 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
     val config =  Env.getConfigOrThrowOnDemand(configPath)
     val node = config.nodes(0)
 
-    val result = RemoteTask.destHomePath(node.port, node.user, node.hostname)
+    val result = RemoteTask.getRemoteHomePath(node.port, node.user, node.hostname)
     println(result)
     assert(result == s"/home/${node.user}")
   }

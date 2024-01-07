@@ -10,6 +10,7 @@ import scala.concurrent.{Await, Future}
 
 object ClusterTools {
   def main(args: Array[String]): Unit = {
+    println("Have a good day")
     bootstrap(args)
   }
 
@@ -21,7 +22,7 @@ object ClusterTools {
       case e: IllegalArgumentException =>
         println(e.getMessage)
         Help.rootHelp.help()
-      case e: HelpException =>
+      case _: HelpException =>
         Help.rootHelp.help()
     }
   }
@@ -56,17 +57,36 @@ object ClusterTools {
 
     val tasks = filteredTargetNodes.map{ node =>
       (isParCmd, taskStr) match {
-        case (false, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
-        case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
-        case (true, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length)) with Parallelize
-        case (true, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome) with Parallelize
-        case (true, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome) with Parallelize
+        case (false, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath)
+        case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath)
+        case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath)
+        case (true, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
+        case (true, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
+        case (true, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
+      }
+    }
+
+    if(taskStr == "cp" && globalConfig.app.seekInCopy) {
+      val targets = tasks.map{case c: Copy => c}.map(_.seek()).filter(_.exitCode == 0)
+      if(targets.nonEmpty){
+        println(s"some nodes has that file already : [ ${targets.map(_.nodeName).mkString(", ")} ]")
+
+        def prompt(): Unit = {
+          print("will you overwrite it?: (y/n)")
+          val input = scala.io.StdIn.readLine()
+          input match {
+            case "y" => ()
+            case "n" => System.exit(0)
+            case _ => prompt()
+          }
+        }
+        prompt()
       }
     }
 
     tasks.foreach(_.onStart())
     val rs = tasks.map(_.execute())
+    tasks.foreach(_.onFinish())
 
     rs match {
       case (sr: SequentialTaskResult) :: _ =>

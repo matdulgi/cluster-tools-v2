@@ -15,5 +15,6 @@ final case class Node(
                      )
 
 final case class App(
-                    replaceHome: Boolean
+                    convertHomePath: Boolean,
+                    seekInCopy: Boolean,
                     )

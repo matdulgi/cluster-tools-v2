@@ -13,43 +13,65 @@ import scala.sys.process._
  * Copy File from Source Node to Destination Nodes
  * File will not be copied when Source node is Destination node
  *
+ * input args can be like:
+ * - /home/user/examole.txt
+ * - /home/user/example.txt /home/user/dir
+ *
+ * destination path will set to the same path as the local path
+ * if there is only local file path argument
+ *
  * @param targetNode
  * @param args
  */
-class Copy(targetNode: Node, args: Seq[String], replaceHome: Boolean) extends RemoteTask(targetNode){
+class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extends RemoteTask(targetNode){
+  val (sourcePath, destPath) = args match {
+    case Seq() => throw new IllegalArgumentException("no args")
+    case Seq(arg1: String) => (arg1, toRemoteSshPath(arg1))
+    case Seq(arg1: String, arg2: String) => (arg1, toRemoteSshPath(arg2))
+    case Seq(_: String, _: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
+  }
+
+  var _remoteHomePathCache = ""
+
   override def taskName: String = s"Copy ${super.taskName}"
 
   /**
-   * check file already exists in target node
+   * convert file path as remote ssh path format
+   * @param path
+   * @return
+   */
+  private def toRemoteSshPath(path: String): String =
+    s"${targetNode.user}@${targetNode.hostname}:$path"
+//    ${Paths.get(path).getFileName.toString}
+
+  /**
+   * check if file already exists in target node
+   *
+   * seek will be executed in multiple nodes if option is set true
    * it will make prompt when file exists in at least once node
    * @return
    */
-  def seek(remotePath: String): Boolean = {
-    false
+  def seek(): SequentialTaskResult = {
+    val r = new Command(targetNode, Seq("ls", sourcePath), convertHomePath).execute()
+    r match { case r: SequentialTaskResult => r }
   }
 
   override def execute(): TaskResult = {
-    val (sourcePath, destPath) = args match {
-      case Seq() => throw new IllegalArgumentException("no args")
-      case Seq(arg1: String) => (arg1, arg1)
-      case Seq(arg1: String, arg2: String) => (arg1,
-        s"$arg2/${Paths.get(arg1).getFileName.toString}"
-      )
-      case Seq(arg1: String, arg2: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
-    }
+    val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, destPath)
+//    val tildeResolved = sshCommand.map(resolveTilde(_)).map(resolveTildeInSshPath(_, convertHomePath))
+    val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_)) else sshCommand
 
-    // seek function in here
-
-    val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, s"${targetNode.user}@${targetNode.hostname}:$destPath").map(resolveTilde(_)).map(resolveTildeInSshPath(_, replaceHome))
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(
       (o: String) => outputBuffer.append(o + "\n"),
       (e: String) => errorBuffer.append(e + "\n")
     )
 
-    logger.out(s"$taskName in ${targetNode.name} [ ${sshCommand.mkString(" ")} ]")
-    logger.err(s"$taskName in ${targetNode.name} [ ${sshCommand.mkString(" ")} ]")
-    val exitCode = sshCommand ! logger
+    val startMsg = s"$taskName in ${targetNode.name} [ ${homePathResolved.mkString(" ")} ]"
+    logger.out(startMsg)
+    logger.err(startMsg)
+
+    val exitCode = homePathResolved ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
   }

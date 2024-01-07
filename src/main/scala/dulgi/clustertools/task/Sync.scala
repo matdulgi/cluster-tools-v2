@@ -9,7 +9,7 @@ import scala.sys.process.ProcessLogger
 import scala.sys.process._
 
 
-class Sync(override val targetNode: Node, args: Seq[String], replaceHome: Boolean) extends RemoteTask(targetNode){
+class Sync(override val targetNode: Node, args: Seq[String], convertHomePath: Boolean) extends RemoteTask(targetNode){
   override def taskName: String = s"Sync ${super.taskName}"
 
   override def execute(): TaskResult = {
@@ -32,16 +32,19 @@ class Sync(override val targetNode: Node, args: Seq[String], replaceHome: Boolea
       else throw new FileNotFoundException(s"file not found: $tildeResolvedPath")
     }
 
-    val sshCommand = Seq("rsync", "-avzh", "-e", s"'ssh -p ${targetNode.port}'", s"$sourcePath$dirDlm", s"${targetNode.user}@${targetNode.hostname}:$destPath").map(resolveTilde(_)).map(resolveTildeInSshPath(_, replaceHome))
+    val sshCommand = Seq("rsync", "-avzh", "-e", s"'ssh -p ${targetNode.port}'", s"$sourcePath$dirDlm", s"${targetNode.user}@${targetNode.hostname}:$destPath")
+    val tildeResolved = sshCommand.map(resolveTilde(_)).map(resolveTildeInSshPath(_, convertHomePath))
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(
       (o: String) => outputBuffer.append(o + "\n"),
       (e: String) => errorBuffer.append(e + "\n")
     )
 
-    logger.out(s"$taskName in ${targetNode.name} [ ${sshCommand.mkString(" ")} ]")
-    logger.err(s"$taskName in ${targetNode.name} [ ${sshCommand.mkString(" ")} ]")
-    val exitCode = sshCommand.mkString(" ") ! logger
+    val startMsg = s"$taskName in ${targetNode.name} [ ${tildeResolved.mkString(" ")} ]"
+    logger.out(startMsg)
+    logger.err(startMsg)
+
+    val exitCode = tildeResolved.mkString(" ") ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
   }
