@@ -16,7 +16,7 @@ import scala.sys.process._
  * @param targetNode
  * @param args
  */
-class Copy(targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Task(targetNode){
+class Copy(targetNode: Node, args: Seq[String], replaceHome: Boolean) extends RemoteTask(targetNode){
   override def taskName: String = s"Copy ${super.taskName}"
 
   /**

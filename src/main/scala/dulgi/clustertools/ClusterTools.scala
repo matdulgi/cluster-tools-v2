@@ -1,32 +1,52 @@
 package dulgi.clustertools
 
 import dulgi.clustertools.env.{Config, Env}
-import dulgi.clustertools.task.Parallelize.{ParallelCommand, ParallelCopy, ParallelSync}
-import dulgi.clustertools.task.{Command, Copy, Help, ParallelTaskResult, Parallelize, SequentialTaskResult, Sync, TaskResult}
+import dulgi.clustertools.task.{Command, Copy, Help, HelpException, ParallelTaskResult, Parallelize, SequentialTaskResult, Sync, TaskResult}
 
+import java.lang.IllegalArgumentException
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 object ClusterTools {
   def main(args: Array[String]): Unit = {
-    run(args)
+    bootstrap(args)
   }
 
-  def run(args: Array[String], configPath: String = ""): Unit = {
+  def bootstrap(args: Array[String], configPath: String = ""): Unit = {
     val globalConfig = if(configPath != "") Env.getConfigOrThrowOnDemand(configPath) else Env.config
+    try {
+      run(args, globalConfig)
+    } catch {
+      case e: IllegalArgumentException =>
+        println(e.getMessage)
+        Help.rootHelp.help()
+      case e: HelpException =>
+        Help.rootHelp.help()
+    }
+  }
 
-    val (isParCmd, parProcessedArgs) = if(args(0) == "par") (true, args.tail) else (false, args)
 
-    val taskStr = if (parProcessedArgs.length > 0) parProcessedArgs(0) else {
-      throw new IllegalArgumentException("no task argument")
+  def run(args: Array[String], globalConfig: Config): Unit = {
+    val (isParCmd, parProcessedArgs) = if(args.length == 0) throw new IllegalArgumentException("no argument")
+    else {
+      if(args(0) == "par") (true, args.tail)
+      else if (args(0) == "help") throw new HelpException
+      else (false, args)
     }
 
-    val targetGroup = if (parProcessedArgs.length > 2) parProcessedArgs(1) else {
-      throw new IllegalArgumentException("no group argument")
+    val taskStr = if (parProcessedArgs.length < 1) throw new IllegalArgumentException("no task argument")
+    else parProcessedArgs(0)
+
+    val targetGroup = if (parProcessedArgs.length < 2) throw new IllegalArgumentException("no group argument")
+    else parProcessedArgs(1)
+
+    val targetHosts = try {
+      globalConfig.groups(targetGroup)
+    } catch {
+      case _ => throw new IllegalArgumentException(s"group $targetGroup isn't specified")
     }
 
-    val targetHosts = globalConfig.groups(targetGroup)
     val targetNodes = targetHosts.map(host => globalConfig.nodes.filter(_.name == host)).flatten
 
     val filteredTargetNodes = taskStr match {

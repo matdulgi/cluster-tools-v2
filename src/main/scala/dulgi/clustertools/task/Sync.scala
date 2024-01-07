@@ -9,7 +9,7 @@ import scala.sys.process.ProcessLogger
 import scala.sys.process._
 
 
-class Sync(override val targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Task(targetNode){
+class Sync(override val targetNode: Node, args: Seq[String], replaceHome: Boolean) extends RemoteTask(targetNode){
   override def taskName: String = s"Sync ${super.taskName}"
 
   override def execute(): TaskResult = {

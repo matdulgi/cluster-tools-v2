@@ -1,12 +1,12 @@
 package dulgi.clustertools.env
 
-import dulgi.clustertools.task.{SequentialTaskResult, Task, TaskResult}
+import dulgi.clustertools.task.{SequentialTaskResult, RemoteTask, TaskResult}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
-class TestTask extends AnyFlatSpec with Matchers {
+class TestRemoteTask extends AnyFlatSpec with Matchers {
   behavior of "Task"
 
   /**
@@ -17,7 +17,7 @@ class TestTask extends AnyFlatSpec with Matchers {
     val config =  Env.getConfigOrThrowOnDemand(configPath)
     val node = config.nodes(0)
 
-    val result = Task.destHomePath(node.port, node.user, node.hostname)
+    val result = RemoteTask.destHomePath(node.port, node.user, node.hostname)
     println(result)
     assert(result == s"/home/${node.user}")
   }
@@ -29,7 +29,7 @@ class TestTask extends AnyFlatSpec with Matchers {
 
     val inputPath = s"${node.user}@${node.hostname}:~/path"
 
-    val task = new Task(node) {
+    val task = new RemoteTask(node) {
       override def execute(): TaskResult = SequentialTaskResult("test", 0, "", "")
     }
 

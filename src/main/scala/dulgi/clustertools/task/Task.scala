@@ -6,19 +6,30 @@ import java.nio.file.Paths
 import scala.language.postfixOps
 
 
-object Task {
+/**
+ * Task
+ */
+abstract class Task {
+  def execute(): TaskResult
+  def onStart(): Unit = {}
+  def onFinish(): Unit = {}
+
+}
+
+/**
+ * Task which access to remote server
+ * @param targetNode
+ */
+object RemoteTask {
   def destHomePath(port: Int, user: String, hostname: String): String = {
     import scala.sys.process._
     val homePath = (s"ssh -p $port $user@$hostname" + " 'echo $HOME'").!!.trim
     homePath
   }
-
 }
-abstract class Task(val targetNode: Node) {
+abstract class RemoteTask(val targetNode: Node) extends Task {
   def taskName: String = "task"
-  def execute(): TaskResult
-  def onStart(): Unit = { }
-  def onFinish(): Unit = { }
+  override def execute(): TaskResult
   def resolveTilde(str: String): String = {
     str.replaceAll("^~", System.getProperty("user.home"))
   }
@@ -29,7 +40,7 @@ abstract class Task(val targetNode: Node) {
       firstTildeResolved.replaceFirst(":~",
         ":" + {
           if (replaceHome) {
-            Task.destHomePath(targetNode.port, targetNode.user, targetNode.hostname)
+            RemoteTask.destHomePath(targetNode.port, targetNode.user, targetNode.hostname)
           } else System.getProperty("user.home")
         }
       )
