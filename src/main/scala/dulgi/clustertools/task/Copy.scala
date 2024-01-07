@@ -2,6 +2,7 @@ package dulgi.clustertools.task
 
 import dulgi.clustertools.env.Node
 
+import java.io.File
 import java.nio.file.Paths
 import scala.language.postfixOps
 import scala.sys.process.ProcessLogger
@@ -58,8 +59,10 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
 
   override def execute(): TaskResult = {
     val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, destPath)
-//    val tildeResolved = sshCommand.map(resolveTilde(_)).map(resolveTildeInSshPath(_, convertHomePath))
     val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_)) else sshCommand
+    val recursiveOptionResolved = if (new File(sourcePath).isDirectory)
+      homePathResolved.head +: "-r" +: homePathResolved.tail
+    else homePathResolved
 
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(
@@ -67,11 +70,11 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
       (e: String) => errorBuffer.append(e + "\n")
     )
 
-    val startMsg = s"$taskName in ${targetNode.name} [ ${homePathResolved.mkString(" ")} ]"
+    val startMsg = s"$taskName in ${targetNode.name} [ ${recursiveOptionResolved.mkString(" ")} ]"
     logger.out(startMsg)
     logger.err(startMsg)
 
-    val exitCode = homePathResolved ! logger
+    val exitCode = recursiveOptionResolved ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
   }

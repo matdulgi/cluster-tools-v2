@@ -15,7 +15,7 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies += "com.typesafe" % "config" % "1.4.2"
-libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.17.2"
+libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.17.4"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.15" % Test
 
 

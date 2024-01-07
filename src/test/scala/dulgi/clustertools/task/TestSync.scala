@@ -15,19 +15,17 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
   val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
-  val fileName = "~/test.txt"
-  val fileNameLocal = fileName.replace("~", System.getProperty("user.home"))
+  val fileName = s"${System.getProperty("user.home")}/test.txt"
 
   before {
     println("create test file")
-    val filePath = Paths.get(fileNameLocal)
-    Files.createFile(filePath)
+    Files.createFile(Paths.get(fileName))
   }
 
   after {
     println("delete test file")
-    Files.deleteIfExists(Paths.get(fileNameLocal))
-    new Command(testNode, Seq("rm", "~/test.txt"), true).execute()
+    Files.deleteIfExists(Paths.get(fileName))
+    new Command(testNode, Seq("rm", fileName), true).execute()
   }
 
   "sync with only source path" should "finish with code 0" in {
@@ -43,7 +41,7 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "sync with with source and dest path" should "finish with code 0" in {
-    val args = Array("~/test.txt", "~")
+    val args = Array(fileName, "~")
     val sync = new Sync(testNode, args, true)
     val result = sync.execute()
     val r = result match {
@@ -77,27 +75,19 @@ class TestDirSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
   val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
-  val dirName = "~/cltlstest"
+  val dirName = s"${System.getProperty("user.home")}/cltlstest"
   val fileName = s"$dirName/test.txt"
-  val dirNameLocal = dirName.replace("~", System.getProperty("user.home"))
-  val fileNameLocal = s"$dirNameLocal/test.txt"
 
   before {
     println("create test directory and file")
-    val directoryPath = Paths.get(dirNameLocal)
-    val filePath = Paths.get(fileNameLocal)
-
-    Files.createDirectories(directoryPath)
-    Files.createFile(filePath)
+    Files.createDirectories(Paths.get(dirName))
+    Files.createFile(Paths.get(fileName))
   }
 
   after {
     println("delete test file")
-    val directoryPath = Paths.get(dirNameLocal)
-    val filePath = Paths.get(fileNameLocal)
-
-    Files.deleteIfExists(filePath)
-    Files.deleteIfExists(directoryPath)
+    Files.deleteIfExists(Paths.get(fileName))
+    Files.deleteIfExists(Paths.get(dirName))
 
     new Command(testNode, Seq("rm", fileName, ";", "rmdir", dirName), true).execute()
   }

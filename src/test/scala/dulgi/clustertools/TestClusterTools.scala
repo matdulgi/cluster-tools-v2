@@ -44,7 +44,7 @@ class TestClusterTools extends AnyFlatSpec with Matchers {
     ClusterTools.bootstrap(args, testConfigPath)
   }
 
-  "command with tilde(~)" should "works" in {
+  "command with home path" should "works in remote servers" in {
     val args = Array("cmd", "all", "ls", "-al", "~")
     ClusterTools.run(args, testConfig)
   }
