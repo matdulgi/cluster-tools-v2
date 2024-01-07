@@ -13,7 +13,7 @@ class Sync(override val targetNode: Node, args: Seq[String], convertHomePath: Bo
   val (sourcePath, destPath) = args match {
     case Seq() => throw new IllegalArgumentException("no args")
     case Seq(arg1: String) => (arg1, arg1)
-    case Seq(arg1: String, arg2: String) => (arg1, toRemoteSshPath(arg2))
+    case Seq(arg1: String, arg2: String) => (arg1, arg2)
     case Seq(_: String, _: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
   }
 
@@ -29,7 +29,7 @@ class Sync(override val targetNode: Node, args: Seq[String], convertHomePath: Bo
   override def taskName: String = s"Sync ${super.taskName}"
 
   override def execute(): TaskResult = {
-    val sshCommand = Seq("rsync", "-avzh", "-e", s"'ssh -p ${targetNode.port}'", s"$sourcePath$dirDlm", s"${targetNode.user}@${targetNode.hostname}:$destPath")
+    val sshCommand = Seq("rsync", "-avzh", "-e", s"'ssh -p ${targetNode.port}'", s"$sourcePath$dirDlm", toRemoteSshPath(destPath))
     val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_)) else sshCommand
 
 
@@ -40,7 +40,6 @@ class Sync(override val targetNode: Node, args: Seq[String], convertHomePath: Bo
     )
 
     val startMsg = s"$taskName in ${targetNode.name} [ ${homePathResolved.mkString(" ")} ]"
-    logger.out(startMsg)
     logger.err(startMsg)
 
     val exitCode = homePathResolved.mkString(" ") ! logger

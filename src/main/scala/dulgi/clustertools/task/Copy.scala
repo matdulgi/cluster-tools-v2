@@ -27,12 +27,12 @@ import scala.sys.process._
 class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extends RemoteTask(targetNode){
   val (sourcePath, destPath) = args match {
     case Seq() => throw new IllegalArgumentException("no args")
-    case Seq(arg1: String) => (arg1, toRemoteSshPath(arg1))
-    case Seq(arg1: String, arg2: String) => (arg1, toRemoteSshPath(arg2))
+    case Seq(arg1: String) => (arg1, arg1)
+    case Seq(arg1: String, arg2: String) => (arg1, arg2)
     case Seq(_: String, _: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
   }
 
-  var _remoteHomePathCache = ""
+  private var _remoteHomePathCache = ""
 
   override def taskName: String = s"Copy ${super.taskName}"
 
@@ -45,7 +45,7 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
    * @return
    */
   def seek(): SequentialTaskResult = {
-    val t = new Command(targetNode, Seq("ls", sourcePath), convertHomePath)
+    val t = new Command(targetNode, Seq("ls", destPath), convertHomePath)
     val r = t.execute()
 
     // caching
@@ -56,7 +56,7 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
   }
 
   override def execute(): TaskResult = {
-    val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, destPath)
+    val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, toRemoteSshPath(destPath))
     val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_, _remoteHomePathCache)) else sshCommand
     val recursiveOptionResolved = if (new File(sourcePath).isDirectory)
       homePathResolved.head +: "-r" +: homePathResolved.tail
@@ -69,7 +69,6 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
     )
 
     val startMsg = s"$taskName in ${targetNode.name} [ ${recursiveOptionResolved.mkString(" ")} ]"
-    logger.out(startMsg)
     logger.err(startMsg)
 
     val exitCode = recursiveOptionResolved ! logger

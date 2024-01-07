@@ -24,7 +24,7 @@ abstract class Task {
 object RemoteTask {
   def getRemoteHomePath(port: Int, user: String, hostname: String): String = {
     import scala.sys.process._
-    println(s"getting remote home path for $user@$hostname:$port... in")
+//    println(s"getting remote home path for $user@$hostname:$port... in")
     val homePath = (s"ssh -p $port $user@$hostname" + " 'echo $HOME'").!!.trim
     homePath
   }

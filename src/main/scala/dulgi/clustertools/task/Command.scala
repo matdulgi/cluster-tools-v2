@@ -16,7 +16,6 @@ class Command(targetNode: Node, args: Seq[String], convertHomePath: Boolean) ext
     )
 
     val startMsg = s"$taskName in ${targetNode.name} [ ${homePathResolved.mkString(" ")} ]"
-    logger.out(startMsg)
     logger.err(startMsg)
 
     val exitCode = homePathResolved.!(logger)

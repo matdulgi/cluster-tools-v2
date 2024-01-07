@@ -8,12 +8,12 @@ case class SequentialTaskResult(nodeName: String, exitCode: Int, stdout: String,
   def printFinishInfo(): Unit = {
     exitCode match {
       case 0 =>
-        println(s"task in $nodeName has finished successfully")
-        println(stdout)
-
+        Console.err.println(s"task in $nodeName finished successfully : ")
+        Console.err.println(stderr.trim)
+        println(stdout.trim)
       case _ =>
-        println(s"task Failed with code $exitCode !")
-        println(stderr)
+        Console.err.println(s"task in $nodeName Failed with code $exitCode : ")
+        Console.err.println(stderr.trim)
     }
   }
 }

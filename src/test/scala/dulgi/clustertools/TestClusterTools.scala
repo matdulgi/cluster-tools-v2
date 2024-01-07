@@ -97,7 +97,6 @@ class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-
   "copy with source and dest path" should "works" in {
     val args = Array("cp", "all", fileName, fileName2)
 

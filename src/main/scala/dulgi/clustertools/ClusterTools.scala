@@ -1,7 +1,7 @@
 package dulgi.clustertools
 
 import dulgi.clustertools.env.{Config, Env}
-import dulgi.clustertools.task.{Command, Copy, Help, HelpException, ParallelTaskResult, Parallelize, SequentialTaskResult, Sync, TaskResult}
+import dulgi.clustertools.task.{Command, Copy, Help, HelpException, ParallelTaskResult, Parallelize, RemoteTask, SequentialTaskResult, Sync, TaskResult}
 
 import java.lang.IllegalArgumentException
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -68,23 +68,7 @@ object ClusterTools {
       }
     }
 
-    if(taskStr == "cp" && globalConfig.app.seekInCopy) {
-      val targets = tasks.map{case c: Copy => c}.map(_.seek()).filter(_.exitCode == 0)
-      if(targets.nonEmpty){
-        println(s"some nodes has that file already : [ ${targets.map(_.nodeName).mkString(", ")} ]")
-
-        def prompt(): Unit = {
-          print("will you overwrite it?: (y/n) ")
-          val input = scala.io.StdIn.readLine()
-          input match {
-            case "y" => ()
-            case "n" => System.exit(0)
-            case _ => prompt()
-          }
-        }
-        prompt()
-      }
-    }
+    if (taskStr == "cp" && globalConfig.app.seekInCopy) seekRemoteFile(tasks)
 
     tasks.foreach(_.onStart())
     val rs = tasks.map(_.execute())
@@ -100,6 +84,32 @@ object ClusterTools {
         val rl = Await.result(Future.sequence(fl), Duration.Inf)
         rl.foreach(_.printFinishInfo())
     }
+  }
+
+  /**
+   * send ls command to remote server
+   * all servers those have that file return code 0
+   * @param tasks
+   */
+  private def seekRemoteFile(tasks: List[RemoteTask]): Unit = {
+    val targets = tasks.map { case c: Copy => c }.map(_.seek()).filter(_.exitCode == 0)
+
+    if (targets.nonEmpty) {
+      println(s"some nodes has that file already : [ ${targets.map(_.nodeName).mkString(", ")} ]")
+
+      def prompt(): Unit = {
+        print("will you overwrite it?: (y/n) ")
+        val input = scala.io.StdIn.readLine()
+        input match {
+          case "y" => ()
+          case "n" => System.exit(0)
+          case _ => prompt()
+        }
+      }
+      prompt()
+    }
+
+
   }
 
 
