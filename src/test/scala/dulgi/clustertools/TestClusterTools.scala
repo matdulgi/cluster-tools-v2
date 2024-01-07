@@ -1,7 +1,7 @@
 package dulgi.clustertools
 
 import dulgi.clustertools.env.Env
-import dulgi.clustertools.task.{Command, HelpException}
+import dulgi.clustertools.task.HelpException
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,14 +31,14 @@ class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
 //  }
 
 
-  "run with help command" should "throws HelpException" in {
+  "run with help task" should "throws HelpException" in {
     val args = Array("help")
     assertThrows[HelpException]{
       ClusterTools.run(args, testConfig)
     }
   }
 
-  "run with no command arg" should "ends with IllegalArgumentException" in {
+  "run with no task arg" should "ends with IllegalArgumentException" in {
     val args = Array.empty[String]
     assertThrows[IllegalArgumentException]{
       ClusterTools.run(args, testConfig)
@@ -52,12 +52,19 @@ class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-//  "run with no args for command" should "ends with IllegalArgumentException" in {
-//    val args = Array("cmd", "all")
-//    assertThrows[IllegalArgumentException]{
-//      ClusterTools.run(args, testConfig)
-//    }
-//  }
+  "run with no args for task" should "ends with IllegalArgumentException" in {
+    val args = Array("cmd", "all")
+    assertThrows[IllegalArgumentException]{
+      ClusterTools.run(args, testConfig)
+    }
+  }
+
+  "run with wrong task arg" should "ends with IllegalArgumentException" in {
+    val args = Array("cms", "all", "ls")
+    assertThrows[IllegalArgumentException]{
+      ClusterTools.run(args, testConfig)
+    }
+  }
 
   "command" should "works" in {
     val args = Array("cmd", "all", "ls", "-al")

@@ -65,6 +65,7 @@ object ClusterTools {
         case (true, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
         case (true, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
         case (true, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
+        case _ => throw new IllegalArgumentException(s"wrong task: $taskStr")
       }
     }
 

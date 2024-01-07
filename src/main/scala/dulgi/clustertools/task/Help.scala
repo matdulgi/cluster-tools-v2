@@ -21,9 +21,9 @@ case class Help(args: Array[String]) extends Task {
           |Cluster Tools - matdulgi
           |
           |# Usage
-          |cltls [par] <command> <target group> [arguments]
+          |cltls [par] <task> <group> [arguments]
           |
-          |# SubCommands
+          |# Task
           |( cmd | cp | sync )
           |
           |# Examples

@@ -12,29 +12,25 @@
 
 # Usage
 ``` bash
-cltls [parr] &lt;cmd> &lt;target> [args]
+cltls [par] <task> <group> [args]
 ```
 
-### Commands
+### Task
 - cltls cmd all ls -al  
 - cltls cp all ~/goodday.txt
-
 - cltls sync all 
 
-### Parallel Commands
-
+### Parallel Task
 - cltls par cmd all ls -al
 - cltls par cp all ~/goodday.txt
 - cltls par sync all 
 
-### Tools
+### Tools (developing)
 - cltls ssh key exchange
 - cltls hosts 
 
 ### Help
 - cltls help
-- cltls cmd help
-- cltls sync help
 
 
 
