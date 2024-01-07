@@ -24,8 +24,8 @@ class Copy(targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Ta
    * it will make prompt when file exists in at least once node
    * @return
    */
-  def seek(): Boolean = {
-    true
+  def seek(remotePath: String): Boolean = {
+    false
   }
 
   override def execute(): TaskResult = {
@@ -37,6 +37,8 @@ class Copy(targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Ta
       )
       case Seq(arg1: String, arg2: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
     }
+
+    // seek function in here
 
     val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, s"${targetNode.user}@${targetNode.hostname}:$destPath").map(resolveTilde(_)).map(resolveTildeInSshPath(_, replaceHome))
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)

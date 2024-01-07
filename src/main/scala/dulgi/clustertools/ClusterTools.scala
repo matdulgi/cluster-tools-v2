@@ -2,7 +2,7 @@ package dulgi.clustertools
 
 import dulgi.clustertools.env.{Config, Env}
 import dulgi.clustertools.task.Parallelize.{ParallelCommand, ParallelCopy, ParallelSync}
-import dulgi.clustertools.task.{Command, Copy, Help, ParallelTaskResult, SequentialTaskResult, Sync, TaskResult}
+import dulgi.clustertools.task.{Command, Copy, Help, ParallelTaskResult, Parallelize, SequentialTaskResult, Sync, TaskResult}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -39,9 +39,9 @@ object ClusterTools {
         case (false, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length))
         case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
         case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
-        case (true, "cmd") => new ParallelCommand(node, parProcessedArgs.slice(2, parProcessedArgs.length))
-        case (true, "cp") => new ParallelCopy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
-        case (true, "sync") => new ParallelSync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome)
+        case (true, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length)) with Parallelize
+        case (true, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome) with Parallelize
+        case (true, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.replaceHome) with Parallelize
       }
     }
 

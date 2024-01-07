@@ -1,15 +1,7 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Node
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-object Parallelize{
-  class ParallelCommand(override val targetNode: Node, args: Seq[String]) extends Command(targetNode, args) with Parallelize
-  class ParallelCopy(override val targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Copy(targetNode, args, replaceHome) with Parallelize
-  class ParallelSync(override val targetNode: Node, args: Seq[String], replaceHome: Boolean) extends Sync(targetNode, args, replaceHome) with Parallelize
-}
 
 trait Parallelize extends Task {
   abstract override def taskName: String = s"parallel ${super.taskName}"

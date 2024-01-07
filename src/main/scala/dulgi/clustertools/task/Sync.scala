@@ -46,9 +46,6 @@ class Sync(override val targetNode: Node, args: Seq[String], replaceHome: Boolea
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
   }
 
-  override def onStart(): Unit = println()
-  override def onFinish(): Unit = println()
-
 }
 
 
