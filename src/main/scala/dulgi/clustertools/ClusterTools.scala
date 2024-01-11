@@ -72,19 +72,20 @@ object ClusterTools {
     if (taskStr == "cp" && globalConfig.app.seekInCopy) seekRemoteFile(tasks)
 
     tasks.foreach(_.onStart())
-    val rs = tasks.map(_.execute())
+    if (!isParCmd){
+      tasks.foreach{_.execute() match {
+          case r: SequentialTaskResult => r.printFinishInfo()
+        }
+      }
+    } else {
+      val fl = tasks.map{_.execute() match {
+        case r: ParallelTaskResult => r.future}
+      }
+      val rl = Await.result(Future.sequence(fl), Duration.Inf)
+      rl.foreach(_.printFinishInfo())
+    }
     tasks.foreach(_.onFinish())
 
-    rs match {
-      case (_: SequentialTaskResult) :: _  =>
-        rs.map{ case r: SequentialTaskResult => r }
-          .foreach(_.printFinishInfo())
-
-      case (_: ParallelTaskResult) :: _ =>
-        val fl = rs.map{ case r: ParallelTaskResult => r.future}
-        val rl = Await.result(Future.sequence(fl), Duration.Inf)
-        rl.foreach(_.printFinishInfo())
-    }
   }
 
   /**

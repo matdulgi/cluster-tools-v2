@@ -11,9 +11,11 @@ case class SequentialTaskResult(nodeName: String, exitCode: Int, stdout: String,
         Console.err.println(s"task in $nodeName finished successfully : ")
         Console.err.println(stderr.trim)
         println(stdout.trim)
+        Console.err.println()
       case _ =>
         Console.err.println(s"task in $nodeName Failed with code $exitCode : ")
         Console.err.println(stderr.trim)
+        Console.err.println()
     }
   }
 }
