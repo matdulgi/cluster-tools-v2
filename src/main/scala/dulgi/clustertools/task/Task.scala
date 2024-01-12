@@ -3,7 +3,7 @@ package dulgi.clustertools.task
 import dulgi.clustertools.Node
 import dulgi.clustertools.task.RemoteTask.getRemoteHomePath
 
-import java.nio.file.Paths
+import java.nio.file.{FileSystems, Paths}
 import scala.language.{postfixOps, reflectiveCalls}
 
 
@@ -19,7 +19,6 @@ abstract class Task {
 
 /**
  * Task which access to remote server
- * @param targetNode
  */
 object RemoteTask {
   def getRemoteHomePath(port: Int, user: String, hostname: String): String = {
@@ -42,14 +41,28 @@ object RemoteTask {
 
 abstract class RemoteTask(val targetNode: Node) extends Task {
   def taskName: String = "task"
-  lazy val remoteHomePath = getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
+  lazy val remoteHomePath: String = getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
   val command: Seq[String]
 
   override def execute(): TaskResult
 
+  def resolveDot(path1: String, path2: String): (String, String) = {
+    List(path1, path2).map { p =>
+      if (p.startsWith(".")) {
+        val currentDirectory = FileSystems.getDefault.getPath(System.getProperty("user.dir"))
+        val resolvedPath = Paths.get(p).normalize()
+        val replacedPath = currentDirectory.resolve(resolvedPath).normalize()
+        replacedPath.toString
+      } else p
+    } match {
+      case List(a, b) => (a, b)
+    }
+  }
+
+
   @Deprecated
   def resolveTilde(str: String, convertHomePath: Boolean = false): String = {
-    if(convertHomePath == true) {
+    if(convertHomePath) {
       str.replaceAll("^~", RemoteTask.getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname))
     } else {
       str.replaceAll("^~", System.getProperty("user.home"))
@@ -73,9 +86,6 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
 
   /**
    * convert file path as remote ssh path format
-   *
-   * @param path
-   * @return
    */
   protected def toRemoteSshPath(path: String): String =
     s"${targetNode.user}@${targetNode.hostname}:$path"
@@ -85,8 +95,6 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
    * replace home path in start of string
    *
    * using replaceAllIn of Regex for lazy initialization rather replaceAll in String
-   * @param path
-   * @return
    */
   def replaceLocalHomePath(path: String): String = {
     val homePath = System.getProperty("user.home")
@@ -100,8 +108,6 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
    * home path in ssh format
    *
    * using replaceAllIn of Regex for lazy initialization rather replaceAll in String
-   * @param path
-   * @return
    */
   def replaceRemoteHomePath(path: String, cache: String = ""): String = {
     val rhp = if (cache == "") remoteHomePath else cache

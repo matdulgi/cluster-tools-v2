@@ -1,6 +1,6 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.Config
+import dulgi.clustertools.{Config, Node}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -13,8 +13,8 @@ import scala.util.Using
 
 class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
-  val testNode = testConfig.nodes(0)
+  val testConfig: Config = Config.getConfigOrThrowOnDemand(testConfigPath)
+  val testNode: Node = testConfig.nodes.head
   val fileName = s"${System.getProperty("user.home")}/test.txt"
 
   before {
@@ -30,7 +30,7 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "sync with only source path" should "finish with code 0" in {
-    val args = Array("~/test.txt")
+    val args = Array(fileName)
     val sync = new Sync(testNode, args, true)
     val result = sync.execute()
     val r = result match {
@@ -38,7 +38,7 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
     }
 
     r.exitCode should be(0)
-    r.stdout should not be ("")
+    r.stdout should not be ""
   }
 
   "sync with dot path" should "works" in {
@@ -64,7 +64,7 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
     }
 
     r.exitCode should be(0)
-    r.stdout should not be ("")
+    r.stdout should not be ""
   }
 
   "parallel sync" should "finish with code 0" in {
@@ -81,15 +81,15 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
     val rr = f.value.get.get
 
     rr.exitCode should be(0)
-    rr.stdout should not be ("")
+    rr.stdout should not be ""
   }
 
 }
 
 class TestDirSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
-  val testNode = testConfig.nodes(0)
+  val testConfig: Config = Config.getConfigOrThrowOnDemand(testConfigPath)
+  val testNode: Node = testConfig.nodes.head
   val dirName = s"${System.getProperty("user.home")}/cltlstest"
   val fileName = s"$dirName/test.txt"
 
@@ -116,7 +116,7 @@ class TestDirSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
     }
 
     r.exitCode should be(0)
-    r.stdout should not be ("")
+    r.stdout should not be ""
   }
 
 }

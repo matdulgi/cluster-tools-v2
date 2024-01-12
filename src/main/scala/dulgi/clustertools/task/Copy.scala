@@ -1,11 +1,15 @@
 package dulgi.clustertools.task
 
+import dulgi.clustertools.Config.config
 import dulgi.clustertools.Node
+
 import java.io.File
 import java.nio.file.Paths
 import scala.language.postfixOps
 import scala.sys.process.ProcessLogger
 import scala.sys.process._
+
+
 
 /**
  * Cluster Copy
@@ -19,18 +23,29 @@ import scala.sys.process._
  *
  * destination path will set to the same path as the local path
  * if there is only local file path argument
- *
- * @param targetNode
- * @param args
  */
-class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extends RemoteTask(targetNode){
-  val (sourcePath, destPath) = args match {
-    case Seq() => throw new IllegalArgumentException("no args")
-    case Seq(arg1: String) => (arg1, arg1)
-    case Seq(arg1: String, arg2: String) => (arg1, arg2)
-    case Seq(_: String, _: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
+class Copy(targetNode: Node, args: Seq[String],
+           convertHomePath: Boolean,
+           createRemoteDirIfNotExists: Boolean = config.app.createRemoteDirIfNotExists
+          )
+  extends Copier(
+    targetNode,
+    args,
+    convertHomePath = convertHomePath,
+    createRemoteDirIfNotExists = createRemoteDirIfNotExists
+  ) {
+  override val command: Seq[String] = {
+    val base = Seq("scp", "-P", targetNode.port.toString, sourcePath, toRemoteSshPath(destPath))
+    if(createRemoteDirIfNotExists) {
+      ()
+    }
+    val homePathResolved = if(convertHomePath) base.map(replaceRemoteHomePath(_, _remoteHomePathCache)) else base
+    val recursiveOptionResolved = if (new File(sourcePath).isDirectory)
+      homePathResolved.head +: "-r" +: homePathResolved.tail
+    else homePathResolved
+
+    createRemoteParentDirectoriesCommand ++ Seq(";") ++ recursiveOptionResolved
   }
-  override val command: Seq[String] = Seq.empty
 
   private var _remoteHomePathCache = ""
 
@@ -45,33 +60,42 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
    * @return
    */
   def seek(): SequentialTaskResult = {
-    val t = new Command(targetNode, Seq("ls", destPath), convertHomePath)
-    val r = t.execute()
+    val task = new Command(targetNode, Seq("ls", destPath), convertHomePath)
+    val result = task.execute()
 
-    // caching
-    if(sourcePath.contains(System.getProperty("user.home")))
-      this._remoteHomePathCache = t.remoteHomePath
+    cacheRemotePath(task)
 
-    r match { case r: SequentialTaskResult => r }
+    result match { case r: SequentialTaskResult => r }
+  }
+
+
+  private def createRemoteParentDirectoriesCommand = {
+    val parentPath = Paths.get(destPath).getParent.toString
+    val task = new Command(targetNode, Seq("mkdir -p ", parentPath), convertHomePath)
+    task.command
+  }
+
+  /**
+   * cache remote path
+   * it prevent to connect remote server in both tasks
+   * if source path contains user home, the reference to remotePath has already bean occur
+   */
+  private def cacheRemotePath(task: RemoteTask): Unit = {
+    if (sourcePath.contains(System.getProperty("user.home")))
+      this._remoteHomePathCache = task.remoteHomePath
   }
 
   override def execute(): TaskResult = {
-    val sshCommand = Seq("scp", "-P", targetNode.port.toString, sourcePath, toRemoteSshPath(destPath))
-    val homePathResolved = if(convertHomePath) sshCommand.map(replaceRemoteHomePath(_, _remoteHomePathCache)) else sshCommand
-    val recursiveOptionResolved = if (new File(sourcePath).isDirectory)
-      homePathResolved.head +: "-r" +: homePathResolved.tail
-    else homePathResolved
-
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(
       (o: String) => outputBuffer.append(o + "\n"),
       (e: String) => errorBuffer.append(e + "\n")
     )
 
-    val startMsg = s"$taskName in ${targetNode.name} [ ${recursiveOptionResolved.mkString(" ")} ]"
+    val startMsg = s"$taskName in ${targetNode.name} [ ${command.mkString(" ")} ]"
     logger.err(startMsg)
 
-    val exitCode = recursiveOptionResolved ! logger
+    val exitCode = command ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
   }
