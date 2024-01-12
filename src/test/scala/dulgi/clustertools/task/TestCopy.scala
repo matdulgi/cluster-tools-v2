@@ -1,6 +1,6 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Env
+import dulgi.clustertools.Config
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -12,7 +12,7 @@ import scala.concurrent.Await
 
 class TestCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
   val fileName = System.getProperty("user.home") + "/test.txt"
   val fileName2 = System.getProperty("user.home") + "/test2.txt"
@@ -76,7 +76,7 @@ class TestCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
 
 class TestDirCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
   val dirName = s"${System.getProperty("user.home")}/cltlstest"
   val fileName = s"$dirName/test.txt"

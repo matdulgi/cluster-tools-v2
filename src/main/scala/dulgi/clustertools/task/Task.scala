@@ -1,6 +1,6 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Node
+import dulgi.clustertools.Node
 import dulgi.clustertools.task.RemoteTask.getRemoteHomePath
 
 import java.nio.file.Paths
@@ -28,10 +28,22 @@ object RemoteTask {
     val homePath = (s"ssh -p $port $user@$hostname" + " 'echo $HOME'").!!.trim
     homePath
   }
+
+  case class RemotePath(
+                         user: String,
+                         hostname: String,
+                         path: String
+                       ) {
+    val remoteHost = s"$user@$hostname"
+    val remotePath = s"$remoteHost:$path"
+  }
+
 }
+
 abstract class RemoteTask(val targetNode: Node) extends Task {
   def taskName: String = "task"
   lazy val remoteHomePath = getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
+  val command: Seq[String]
 
   override def execute(): TaskResult
 
@@ -92,19 +104,21 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
    * @return
    */
   def replaceRemoteHomePath(path: String, cache: String = ""): String = {
+    val rhp = if (cache == "") remoteHomePath else cache
     val homePath = System.getProperty("user.home")
 
-    val rhp = if (cache == "") remoteHomePath else cache
+    val homeInFirstResolved = if(path.startsWith(homePath)) path.replaceFirst(homePath, rhp)
+    else path
 
     val sshPathRegex = "([a-zA-Z0-9_-]+)@([a-zA-Z0-9.-]+):(.*)".r
-    sshPathRegex.replaceAllIn(path, m => {
+    val sshFormatPathResolved = sshPathRegex.replaceAllIn(homeInFirstResolved, m => {
       val username = m.group(1)
       val domain = m.group(2)
       val path = m.group(3)
-      s"$username@$domain:${
-        path.replaceFirst(homePath, rhp)
-      }"
+      s"$username@$domain:${ path.replaceFirst(homePath, rhp) }"
     })
+
+    sshFormatPathResolved
   }
 
 }

@@ -1,25 +1,26 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Env
+import dulgi.clustertools.Config
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 
 import java.io.PrintWriter
-import java.nio.file.{Files, Paths}
+import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
 import scala.concurrent.Await
 import scala.util.Using
 
 class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
   val fileName = s"${System.getProperty("user.home")}/test.txt"
 
   before {
     println("create test file")
-    Files.createFile(Paths.get(fileName))
+    val p = Paths.get(fileName)
+    if(!Files.exists(p)) Files.createFile(p)
   }
 
   after {
@@ -38,6 +39,20 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
 
     r.exitCode should be(0)
     r.stdout should not be ("")
+  }
+
+  "sync with dot path" should "works" in {
+    val args = Array(".")
+    val sync = new Sync(testNode, args, true)
+    val result = sync.execute()
+    val r = result match {
+      case r: SequentialTaskResult => r
+    }
+
+    println(r.stdout)
+    println(r.stderr)
+    r.exitCode should be(0)
+    r.stdout should not be ""
   }
 
   "sync with with source and dest path" should "finish with code 0" in {
@@ -73,7 +88,7 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
 
 class TestDirSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
   val dirName = s"${System.getProperty("user.home")}/cltlstest"
   val fileName = s"$dirName/test.txt"

@@ -1,14 +1,12 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Env
+import dulgi.clustertools.Config
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.io.{ByteArrayOutputStream, PrintStream}
-
 class TestRemoteTask extends AnyFlatSpec with Matchers {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
   val fileName = System.getProperty("user.home") + "/test.txt"
   val fileName2 = System.getProperty("user.home") + "/test2.txt"
@@ -16,6 +14,7 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
 
   val task = new RemoteTask(testNode) {
     override def execute(): TaskResult = {LocalTaskResult(0, "", "")}
+    override val command: Seq[String] = Seq.empty
   }
 
   "it" should "not initialize remoteHomePath if path does not contains home path" in {

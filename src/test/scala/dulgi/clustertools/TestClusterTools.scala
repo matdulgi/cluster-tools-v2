@@ -1,6 +1,5 @@
 package dulgi.clustertools
 
-import dulgi.clustertools.env.Env
 import dulgi.clustertools.task.HelpException
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
@@ -11,7 +10,7 @@ import java.nio.file.{Files, Paths}
 
 class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val fileName = System.getProperty("user.home") + "/test.txt"
   val fileName2 = System.getProperty("user.home") + "/test2.txt"
 

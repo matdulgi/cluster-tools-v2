@@ -1,6 +1,6 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Env
+import dulgi.clustertools.Config
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
@@ -10,7 +10,7 @@ import scala.concurrent.duration.Duration
 
 class TestCommand extends AnyFlatSpec with Matchers {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Env.getConfigOrThrowOnDemand(testConfigPath)
+  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
   val testNode = testConfig.nodes(0)
 
 

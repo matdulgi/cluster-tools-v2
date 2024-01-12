@@ -1,7 +1,6 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.Node
-
+import dulgi.clustertools.Node
 import java.io.File
 import java.nio.file.Paths
 import scala.language.postfixOps
@@ -31,6 +30,7 @@ class Copy(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extend
     case Seq(arg1: String, arg2: String) => (arg1, arg2)
     case Seq(_: String, _: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
   }
+  override val command: Seq[String] = Seq.empty
 
   private var _remoteHomePathCache = ""
 

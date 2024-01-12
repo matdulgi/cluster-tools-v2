@@ -1,11 +1,16 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.env.{Node}
-
+import dulgi.clustertools.Node
 import scala.sys.process._
+import dulgi.clustertools.Config.config
 
-class Command(targetNode: Node, args: Seq[String], convertHomePath: Boolean) extends RemoteTask(targetNode){
+class Command(targetNode: Node, args: Seq[String],
+              convertHomePath: Boolean = config.app.convertHomePath,
+              createRemoteDirIfNotExists: Boolean = config.app.convertHomePath
+             ) extends RemoteTask(targetNode){
   override def taskName: String = s"Command ${super.taskName}"
+
+  override val command: Seq[String] = Seq.empty
   override def execute(): TaskResult = {
     if (args.length == 0){
       throw new IllegalArgumentException("no command args")

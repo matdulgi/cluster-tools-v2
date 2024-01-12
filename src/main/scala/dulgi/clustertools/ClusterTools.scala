@@ -1,6 +1,5 @@
 package dulgi.clustertools
 
-import dulgi.clustertools.env.{Config, Env}
 import dulgi.clustertools.task.{Command, Copy, Help, HelpException, ParallelTaskResult, Parallelize, RemoteTask, SequentialTaskResult, Sync, TaskResult}
 
 import java.lang.IllegalArgumentException
@@ -15,7 +14,9 @@ object ClusterTools {
   }
 
   def bootstrap(args: Array[String], configPath: String = ""): Unit = {
-    val globalConfig = if(configPath != "") Env.getConfigOrThrowOnDemand(configPath) else Env.config
+    val globalConfig = if(configPath != "") Config.getConfigOrThrowOnDemand(configPath)
+    else Config.config
+
     try {
       run(args, globalConfig)
     } catch {

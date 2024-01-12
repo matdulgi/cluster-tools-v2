@@ -1,4 +1,4 @@
-package dulgi.clustertools.env
+package dulgi.clustertools
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
