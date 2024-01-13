@@ -32,11 +32,11 @@ class Copy(targetNode: Node, args: Seq[String],
     targetNode,
     args,
     convertHomePath = convertHomePath,
-    createRemoteDirIfNotExists = createRemoteDirIfNotExists
+    createRemoteDirIfNotExists = createRemoteDirIfNotExists,
   ) {
 
   override val command: Seq[String] = {
-    val base = Seq("scp", "-P", targetNode.port.toString, sourcePath, toRemoteSshPath(destPath))
+    val base = Seq("scp", "-P", targetNode.port.toString, sourcePath, remotePath.toString)
     val recursiveOptionResolved = if (new File(sourcePath).isDirectory) {
       base.head +: "-r" +: base.tail
     } else base
@@ -56,7 +56,7 @@ class Copy(targetNode: Node, args: Seq[String],
    * @return
    */
   def seek(): SequentialTaskResult = {
-    val task = new Command(targetNode, Seq("ls", destPath), convertHomePath)
+    val task = new Command(targetNode, Seq("ls", remotePath.toString), convertHomePath)
     val result = task.execute()
 
     cacheRemotePath(task)
@@ -66,7 +66,7 @@ class Copy(targetNode: Node, args: Seq[String],
 
 
   private def createRemoteParentDirectoriesCommand = {
-    val parentPath = Paths.get(destPath).getParent.toString
+    val parentPath = Paths.get(remotePath.toString).getParent.toString
     val task = new Command(targetNode, Seq("mkdir -p ", parentPath), convertHomePath)
     task.execute()
   }

@@ -16,7 +16,7 @@ abstract class Copier(
                        val convertHomePath: Boolean = config.app.convertHomePath,
                        val createRemoteDirIfNotExists: Boolean = config.app.createRemoteDirIfNotExists,
                      ) extends RemoteTask ( targetNode = targetNode ) {
-  val (sourcePath, destPath) = {
+  val (sourcePath, remotePath) = {
     val paths = args match {
       case Seq() => throw new IllegalArgumentException("no args")
       case Seq(arg1: String) => (arg1, arg1)
@@ -26,12 +26,15 @@ abstract class Copier(
     val dotResolved = paths match {
       case (x, y) => resolveDot(x, y)
     }
+
     val homePathResolved = if (convertHomePath)
       dotResolved match {
         case (x, y) => (x, replaceRemoteHomePath(y))
       } else dotResolved
 
-    homePathResolved
+    homePathResolved match {
+      case (x, y) => (x, toRemoteSshURL(y))
+    }
   }
 
   protected val dirDlm: String = {
@@ -40,6 +43,4 @@ abstract class Copier(
       if (Files.isDirectory(path)) "/" else ""
     } else throw new FileNotFoundException(s"file not found: $sourcePath")
   }
-
-
 }

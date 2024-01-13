@@ -45,5 +45,6 @@ final case class Node(
 final case class App(
                     convertHomePath: Boolean,
                     seekInCopy: Boolean,
-                    createRemoteDirIfNotExists: Boolean
+                    createRemoteDirIfNotExists: Boolean,
+                    asHostUser: Boolean
                     )

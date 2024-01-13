@@ -25,6 +25,7 @@ class TestCommand extends AnyFlatSpec with Matchers {
     r.stdout should not be ("")
   }
 
+
   "command with tilde(~)" should "ends with code 0" in {
     val args = Array("ls", "-al", "~")
     val cmd = new Command(testNode, args, true)

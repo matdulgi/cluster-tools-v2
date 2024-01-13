@@ -1,19 +1,27 @@
 package dulgi.clustertools.task
 
 import dulgi.clustertools.Node
+
 import scala.sys.process._
 import dulgi.clustertools.Config.config
 
-class Command(targetNode: Node, args: Seq[String],
-              convertHomePath: Boolean = config.app.convertHomePath,
-             ) extends RemoteTask(targetNode){
+class Command(
+             targetNode: Node, args: Seq[String],
+             convertHomePath: Boolean = config.app.convertHomePath,
+             asHostUser: Boolean = config.app.asHostUser,
+             )
+  extends RemoteTask(
+    targetNode = targetNode,
+    asHostUser = asHostUser,
+  ){
   override def taskName: String = s"Command ${super.taskName}"
 
   override val command: Seq[String] = {
     if (args.isEmpty){
       throw new IllegalArgumentException("no command args")
     }
-    val sshCommand = Seq("ssh", "-p", targetNode.port.toString, s"${targetNode.user}@${targetNode.hostname}") ++ args
+
+    val sshCommand = Seq("ssh", "-p", targetNode.port.toString, remoteHost.toString) ++ args
     val homePathResolved = if(convertHomePath) sshCommand.map(replaceLocalHomePath) else sshCommand
     homePathResolved
   }

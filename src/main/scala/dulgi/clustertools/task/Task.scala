@@ -1,7 +1,7 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.Node
-import dulgi.clustertools.task.RemoteTask.getRemoteHomePath
+import dulgi.clustertools.{Config, Node}
+import dulgi.clustertools.task.RemoteTask.{RemoteHost, SshURL, getRemoteHomePath}
 
 import java.nio.file.{FileSystems, Paths}
 import scala.language.{postfixOps, reflectiveCalls}
@@ -28,21 +28,37 @@ object RemoteTask {
     homePath
   }
 
-  case class RemotePath(
-                         user: String,
-                         hostname: String,
-                         path: String
-                       ) {
-    val remoteHost = s"$user@$hostname"
-    val remotePath = s"$remoteHost:$path"
+  case class SshURL(
+                   user: String,
+                   hostname: String,
+                   path: String
+                   ) {
+    val remoteHost = RemoteHost(user, hostname)
+    override def toString: String = s"$remoteHost:$path"
+  }
+
+  case class RemoteHost(
+                       user: String,
+                       hostname: String
+                      ){
+    override def toString: String = s"$user@$hostname"
   }
 
 }
 
-abstract class RemoteTask(val targetNode: Node) extends Task {
+abstract class RemoteTask(
+                         val targetNode: Node,
+                         val asHostUser: Boolean = Config.config.app.asHostUser
+
+                         ) extends Task {
   def taskName: String = "task"
   lazy val remoteHomePath: String = getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
   val command: Seq[String]
+
+  val remoteHost = {
+    val remoteUser = if(asHostUser) System.getProperty("user.name") else targetNode.user
+    RemoteHost(remoteUser, targetNode.hostname)
+  }
 
   override def execute(): TaskResult
 
@@ -83,12 +99,16 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
     else str
   }
 
-
   /**
    * convert file path as remote ssh path format
+   * responsible to convert username, home path, and so on as configurations
    */
-  protected def toRemoteSshPath(path: String): String =
-    s"${targetNode.user}@${targetNode.hostname}:$path"
+  protected def toRemoteSshURL(
+                              path: String,
+                              ): SshURL = {
+    val targetUser = if(asHostUser) System.getProperty("user.name") else targetNode.user
+    SshURL(targetUser, targetNode.hostname, path)
+  }
 
 
   /**
@@ -100,7 +120,7 @@ abstract class RemoteTask(val targetNode: Node) extends Task {
     val homePath = System.getProperty("user.home")
     val homePathRegex = s"^$homePath"r
 
-    homePathRegex.replaceAllIn(path, m => remoteHomePath)
+    homePathRegex.replaceAllIn(path, _ => remoteHomePath)
 
   }
 
