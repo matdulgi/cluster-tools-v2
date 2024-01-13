@@ -37,7 +37,7 @@ abstract class Copier(
     }
   }
 
-  protected val dirDlm: String = {
+  protected lazy val dirDlm: String = {
     val path = Paths.get(sourcePath)
     if (Files.exists(path)) {
       if (Files.isDirectory(path)) "/" else ""

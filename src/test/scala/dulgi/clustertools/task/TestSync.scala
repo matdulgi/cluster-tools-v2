@@ -41,19 +41,23 @@ class TestFileSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
     r.stdout should not be ""
   }
 
-  "sync with dot path" should "works" in {
-    val args = Array(".")
+  it should "not check if file is exist without execute" in {
+    val args = Array("file_does_not_exist")
+    val sync = new Sync(testNode, args, true)
+  }
+
+  "sync with only filename" should "resolved to under cwd" in {
+    val args = Array("test.txt")
     val sync = new Sync(testNode, args, true)
     val result = sync.execute()
     val r = result match {
       case r: SequentialTaskResult => r
     }
 
-    println(r.stdout)
-    println(r.stderr)
     r.exitCode should be(0)
     r.stdout should not be ""
   }
+
 
   "sync with with source and dest path" should "finish with code 0" in {
     val args = Array(fileName, "~")
@@ -118,5 +122,22 @@ class TestDirSync extends AnyFlatSpec with Matchers with BeforeAndAfter {
     r.exitCode should be(0)
     r.stdout should not be ""
   }
+
+
+  "sync with dot path" should "sync file into same path in remote server" in {
+    System.setProperty("user.dir", dirName)
+    val args = Array(".")
+    val sync = new Sync(testNode, args, true)
+    val result = sync.execute()
+    val r = result match {
+      case r: SequentialTaskResult => r
+    }
+
+    println(r.stdout)
+    println(r.stderr)
+    r.exitCode should be(0)
+    r.stdout should not be ""
+  }
+
 
 }

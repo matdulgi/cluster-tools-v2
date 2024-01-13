@@ -16,7 +16,6 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
   val testResult = SequentialTaskResult(testNode.name, 0, "", "")
 
 
-
   val task = new RemoteTask(testNode) {
     override def execute(): TaskResult = {LocalTaskResult(0, "", "")}
     override val command: Seq[String] = Seq.empty
@@ -33,7 +32,36 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
     assert(cmd.remoteHost.user == hostUser)
   }
 
+  /**
+   * linux only. assuming target user home path is /home/$USER
+   */
+  "remote home path" should "be resolved to remote user home path when referenced" in {
+    val configPath = "./conf/test.conf"
+    val config = Config.getConfigOrThrowOnDemand(configPath)
+    val node = config.nodes(0)
 
+    val task = new RemoteTask(node, false) {
+      override val command: Seq[String] = Seq.empty
+      override def execute(): TaskResult = {testResult}
+    }
+    val homePath = task.remoteHomePath
+    println(homePath)
+    assert(homePath == s"/home/${node.user}")
+  }
+
+  "home path in ssh path" should "replaced with dest system path" in {
+    val configPath = "./conf/test.conf"
+    val config = Config.getConfigOrThrowOnDemand(configPath)
+    val node = config.nodes(0)
+
+    val task = new RemoteTask(node) {
+      override def execute(): TaskResult = SequentialTaskResult("test", 0, "", "")
+      override val command: Seq[String] = Seq.empty
+    }
+
+    val resolvedPath = task.remoteHomePath
+    assert(s"/home/${node.user}" == resolvedPath)
+  }
 
 
   "it" should "not initialize remoteHomePath if path does not contains home path" in {

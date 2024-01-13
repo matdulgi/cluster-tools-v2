@@ -42,7 +42,6 @@ object RemoteTask {
 abstract class RemoteTask(
                          val targetNode: Node,
                          val asHostUser: Boolean = Config.config.app.asHostUser
-
                          ) extends Task {
   def taskName: String = "task"
 
