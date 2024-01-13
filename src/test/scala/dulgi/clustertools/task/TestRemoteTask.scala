@@ -1,25 +1,23 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.Config
-import org.scalatest.BeforeAndAfter
+import dulgi.clustertools.{Config, Node}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.nio.file.{Files, Paths}
-
 class TestRemoteTask extends AnyFlatSpec with Matchers {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
-  val testNode = testConfig.nodes(0)
-  val fileName = System.getProperty("user.home") + "/test.txt"
-  val fileName2 = System.getProperty("user.home") + "/test2.txt"
-  val testResult = SequentialTaskResult(testNode.name, 0, "", "")
+  val testConfig: Config = Config.getConfigOrThrowOnDemand(testConfigPath)
+  val testNode: Node = testConfig.nodes.head
+  val fileName: String = System.getProperty("user.home") + "/test.txt"
+  val fileName2: String = System.getProperty("user.home") + "/test2.txt"
+  val testResult: SequentialTaskResult = SequentialTaskResult(testNode.name, 0, "", "")
 
 
-  val task = new RemoteTask(testNode) {
+  val task: RemoteTask = new RemoteTask(testNode) {
     override def execute(): TaskResult = {LocalTaskResult(0, "", "")}
     override val command: Seq[String] = Seq.empty
   }
+
 
   "remote user" should "be host user under asHostUser option" in {
     val args = Array("ls", "-al")
@@ -38,11 +36,11 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
   "remote home path" should "be resolved to remote user home path when referenced" in {
     val configPath = "./conf/test.conf"
     val config = Config.getConfigOrThrowOnDemand(configPath)
-    val node = config.nodes(0)
+    val node = config.nodes.head
 
     val task = new RemoteTask(node, false) {
       override val command: Seq[String] = Seq.empty
-      override def execute(): TaskResult = {testResult}
+      override def execute(): TaskResult = testResult
     }
     val homePath = task.remoteHomePath
     println(homePath)
@@ -52,7 +50,7 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
   "home path in ssh path" should "replaced with dest system path" in {
     val configPath = "./conf/test.conf"
     val config = Config.getConfigOrThrowOnDemand(configPath)
-    val node = config.nodes(0)
+    val node = config.nodes.head
 
     val task = new RemoteTask(node) {
       override def execute(): TaskResult = SequentialTaskResult("test", 0, "", "")

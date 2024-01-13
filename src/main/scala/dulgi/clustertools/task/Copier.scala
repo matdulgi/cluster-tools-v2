@@ -1,10 +1,12 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.Node
+import dulgi.clustertools.{Config, Node}
 import dulgi.clustertools.Config.config
+import dulgi.clustertools.task.RemoteTask.{SshURL, resolveDot}
 
 import java.io.FileNotFoundException
 import java.nio.file.{Files, Paths}
+
 
 
 /**
@@ -17,20 +19,24 @@ abstract class Copier(
                        val createRemoteDirIfNotExists: Boolean = config.app.createRemoteDirIfNotExists,
                      ) extends RemoteTask ( targetNode = targetNode ) {
   val (sourcePath, remotePath) = {
-    val paths = args match {
+    val (srcPathArg, remotePathArg) = args match {
       case Seq() => throw new IllegalArgumentException("no args")
       case Seq(arg1: String) => (arg1, arg1)
       case Seq(arg1: String, arg2: String) => (arg1, arg2)
       case Seq(_: String, _: String, _*) => throw new IllegalArgumentException(s"more then two args: $args")
     }
-    val dotResolved = paths match {
-      case (x, y) => resolveDot(x, y)
+
+    val (dotResolvedSrc, dotResolvedRemote) = (resolveDot(srcPathArg), resolveDot(remotePathArg))
+
+    val (absSrcPath, absRemotePath) = {
+      val t = List(dotResolvedSrc, dotResolvedRemote).map( Paths.get(_).toAbsolutePath.toString )
+      t match {
+        case List(x, y) => (x, y)
+      }
     }
 
-    val homePathResolved = if (convertHomePath)
-      dotResolved match {
-        case (x, y) => (x, replaceRemoteHomePath(y))
-      } else dotResolved
+    val homePathResolved = if (convertHomePath) (absSrcPath, replaceRemoteHomePath(absRemotePath))
+    else (absSrcPath, absRemotePath)
 
     homePathResolved match {
       case (x, y) => (x, toRemoteSshURL(y))

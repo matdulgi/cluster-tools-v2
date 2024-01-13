@@ -24,7 +24,7 @@ class Sync(
   override lazy val command: Seq[String] = {
     val base = Seq("rsync", "-azvh", "-e", s"'ssh -p ${targetNode.port.toString}'", s"$sourcePath$dirDlm", remotePath.toString)
     if(createRemoteDirIfNotExists) {
-      val p = Paths.get(remotePath.toString).getParent.toString
+      val p = Paths.get(remotePath.path).getParent.toString
       base match {
         case h :: t => h :: s"--rsync-path='mkdir -p $p && rsync'" :: t
       }

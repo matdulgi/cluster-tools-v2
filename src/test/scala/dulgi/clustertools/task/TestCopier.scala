@@ -1,19 +1,20 @@
 package dulgi.clustertools.task
 
-import dulgi.clustertools.Config
+import dulgi.clustertools.{Config, Node}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.{Files, Paths}
 
+
 class TestCopier extends AnyFlatSpec with Matchers with BeforeAndAfter {
   val testConfigPath = "./conf/test.conf"
-  val testConfig = Config.getConfigOrThrowOnDemand(testConfigPath)
-  val testNode = testConfig.nodes(0)
-  val fileName = System.getProperty("user.home") + "/test.txt"
-  val fileName2 = System.getProperty("user.home") + "/test2.txt"
-  val testResult = SequentialTaskResult(testNode.name, 0, "", "")
+  val testConfig: Config = Config.getConfigOrThrowOnDemand(testConfigPath)
+  val testNode: Node = testConfig.nodes.head
+  val fileName: String = System.getProperty("user.home") + "/test.txt"
+  val fileName2: String = System.getProperty("user.home") + "/test2.txt"
+  val testResult: SequentialTaskResult = SequentialTaskResult(testNode.name, 0, "", "")
 
   before {
     println("create test file")
@@ -38,3 +39,6 @@ class TestCopier extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
 }
+
+
+

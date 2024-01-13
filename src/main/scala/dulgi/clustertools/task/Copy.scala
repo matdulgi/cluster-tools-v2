@@ -24,9 +24,10 @@ import scala.sys.process._
  * destination path will set to the same path as the local path
  * if there is only local file path argument
  */
-class Copy(targetNode: Node, args: Seq[String],
-           convertHomePath: Boolean,
-           createRemoteDirIfNotExists: Boolean = config.app.createRemoteDirIfNotExists
+class Copy(
+          targetNode: Node, args: Seq[String],
+          convertHomePath: Boolean,
+          createRemoteDirIfNotExists: Boolean = config.app.createRemoteDirIfNotExists
           )
   extends Copier(
     targetNode,
