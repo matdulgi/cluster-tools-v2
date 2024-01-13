@@ -34,17 +34,13 @@ class Copy(targetNode: Node, args: Seq[String],
     convertHomePath = convertHomePath,
     createRemoteDirIfNotExists = createRemoteDirIfNotExists
   ) {
+
   override val command: Seq[String] = {
     val base = Seq("scp", "-P", targetNode.port.toString, sourcePath, toRemoteSshPath(destPath))
-    if(createRemoteDirIfNotExists) {
-      ()
-    }
-    val homePathResolved = if(convertHomePath) base.map(replaceRemoteHomePath(_, _remoteHomePathCache)) else base
-    val recursiveOptionResolved = if (new File(sourcePath).isDirectory)
-      homePathResolved.head +: "-r" +: homePathResolved.tail
-    else homePathResolved
-
-    createRemoteParentDirectoriesCommand ++ Seq(";") ++ recursiveOptionResolved
+    val recursiveOptionResolved = if (new File(sourcePath).isDirectory) {
+      base.head +: "-r" +: base.tail
+    } else base
+    recursiveOptionResolved
   }
 
   private var _remoteHomePathCache = ""
@@ -72,7 +68,7 @@ class Copy(targetNode: Node, args: Seq[String],
   private def createRemoteParentDirectoriesCommand = {
     val parentPath = Paths.get(destPath).getParent.toString
     val task = new Command(targetNode, Seq("mkdir -p ", parentPath), convertHomePath)
-    task.command
+    task.execute()
   }
 
   /**
@@ -86,6 +82,10 @@ class Copy(targetNode: Node, args: Seq[String],
   }
 
   override def execute(): TaskResult = {
+    if(createRemoteDirIfNotExists) {
+      createRemoteParentDirectoriesCommand
+    }
+
     val (outputBuffer, errorBuffer) = (new StringBuilder, new StringBuilder)
     val logger = ProcessLogger(
       (o: String) => outputBuffer.append(o + "\n"),
@@ -95,7 +95,7 @@ class Copy(targetNode: Node, args: Seq[String],
     val startMsg = s"$taskName in ${targetNode.name} [ ${command.mkString(" ")} ]"
     logger.err(startMsg)
 
-    val exitCode = command ! logger
+    val exitCode = command.mkString(" ") ! logger
 
     SequentialTaskResult(targetNode.name, exitCode, outputBuffer.toString, errorBuffer.toString)
   }

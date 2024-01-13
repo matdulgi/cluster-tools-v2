@@ -26,7 +26,7 @@ class Sync(
     if(createRemoteDirIfNotExists) {
       val p = Paths.get(destPath).getParent.toString
       base match {
-        case h :: t=> h :: s"--rsync-path='mkdir -p $p && rsync'" :: t
+        case h :: t => h :: s"--rsync-path='mkdir -p $p && rsync'" :: t
       }
     } else base
   }

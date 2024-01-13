@@ -42,6 +42,19 @@ class TestCopy extends AnyFlatSpec with Matchers with BeforeAndAfter {
     r.stdout should not be ""
   }
 
+  "copy with path with dot" should "finish with code 0" in {
+    System.setProperty("user.dir", System.getProperty("user.home"))
+    val args = Array("./tmp")
+    val copy = new Copy(testNode, args, true)
+    val result = copy.execute()
+
+    val r = result match {
+      case r: SequentialTaskResult => r
+    }
+
+    r.exitCode should be(0)
+//    r.stdout should not be ""
+  }
 
   "copy with source and dest path" should "finish with code 0" in {
     val args = Array(fileName, fileName2)
