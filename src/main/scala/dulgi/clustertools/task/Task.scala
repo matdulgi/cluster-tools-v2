@@ -1,7 +1,7 @@
 package dulgi.clustertools.task
 
 import dulgi.clustertools.{Config, Node}
-import dulgi.clustertools.task.RemoteTask.{RemoteHost, SshURL, getRemoteHomePath}
+import dulgi.clustertools.task.RemoteTask.{RemoteHost, SshURL}
 
 import java.nio.file.{FileSystems, Paths}
 import scala.language.{postfixOps, reflectiveCalls}
@@ -21,13 +21,6 @@ abstract class Task {
  * Task which access to remote server
  */
 object RemoteTask {
-  def getRemoteHomePath(port: Int, user: String, hostname: String): String = {
-    import scala.sys.process._
-//    println(s"getting remote home path for $user@$hostname:$port... in")
-    val homePath = (s"ssh -p $port $user@$hostname" + " 'echo $HOME'").!!.trim
-    homePath
-  }
-
   case class SshURL(
                    user: String,
                    hostname: String,
@@ -52,7 +45,14 @@ abstract class RemoteTask(
 
                          ) extends Task {
   def taskName: String = "task"
-  lazy val remoteHomePath: String = getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
+
+  lazy val remoteHomePath: String = {
+    import scala.sys.process._
+    //    println(s"getting remote home path for $user@$hostname:$port... in")
+    val homePath = (s"ssh -p ${targetNode.port} ${remoteHost.toString}" + " 'echo $HOME'").!!.trim
+    homePath
+  }
+
   val command: Seq[String]
 
   val remoteHost = {
@@ -75,29 +75,14 @@ abstract class RemoteTask(
     }
   }
 
+  @Deprecated
+  def resolveTilde(str: String): String = "^~".r.replaceFirstIn(str, remoteHomePath)
 
   @Deprecated
-  def resolveTilde(str: String, convertHomePath: Boolean = false): String = {
-    if(convertHomePath) {
-      str.replaceAll("^~", RemoteTask.getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname))
-    } else {
-      str.replaceAll("^~", System.getProperty("user.home"))
-    }
+  def resolveTildeInSshPath(sshPath: SshURL): SshURL = {
+    sshPath.copy(path = resolveTilde(sshPath.path))
   }
 
-  @Deprecated
-  def resolveTildeInSshPath(str: String, convertHomePath: Boolean): String = {
-    val firstTildeResolved = resolveTilde(str)
-    if (firstTildeResolved.matches(("([a-zA-Z0-9_-]+)@([a-zA-Z0-9.-]+):~(.*)" r).toString)) {
-      firstTildeResolved.replaceFirst(":~",
-        s":${
-          if (convertHomePath) RemoteTask.getRemoteHomePath(targetNode.port, targetNode.user, targetNode.hostname)
-          else System.getProperty("user.home")
-        }"
-      )
-    }
-    else str
-  }
 
   /**
    * convert file path as remote ssh path format
@@ -124,16 +109,18 @@ abstract class RemoteTask(
 
   }
 
+
   /**
    * home path in ssh format
+   * remote path can be path syntax or ssh url syntax
    *
    * using replaceAllIn of Regex for lazy initialization rather replaceAll in String
    */
   def replaceRemoteHomePath(path: String, cache: String = ""): String = {
-    val rhp = if (cache == "") remoteHomePath else cache
-    val homePath = System.getProperty("user.home")
+    val _remoteHomePath = if (cache == "") remoteHomePath else cache
+    val hostHomePath = System.getProperty("user.home")
 
-    val homeInFirstResolved = if(path.startsWith(homePath)) path.replaceFirst(homePath, rhp)
+    val homeInFirstResolved = if(path.startsWith(hostHomePath)) path.replaceFirst(hostHomePath, _remoteHomePath)
     else path
 
     val sshPathRegex = "([a-zA-Z0-9_-]+)@([a-zA-Z0-9.-]+):(.*)".r
@@ -141,7 +128,7 @@ abstract class RemoteTask(
       val username = m.group(1)
       val domain = m.group(2)
       val path = m.group(3)
-      s"$username@$domain:${ path.replaceFirst(homePath, rhp) }"
+      s"$username@$domain:${ path.replaceFirst(hostHomePath, _remoteHomePath) }"
     })
 
     sshFormatPathResolved

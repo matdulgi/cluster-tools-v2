@@ -29,6 +29,7 @@ class TestRemoteTask extends AnyFlatSpec with Matchers {
     val cmd = new Command(node, args,
       asHostUser = true
     )
+    println(cmd.remoteHost.user)
     assert(cmd.remoteHost.user == hostUser)
   }
 
