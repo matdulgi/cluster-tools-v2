@@ -81,7 +81,7 @@ class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "parallel command" should "works" in {
-    val args = Array("par", "cmd", "all", "ls", "-al")
+    val args = Array("pcmd", "all", "ls", "-al")
     ClusterTools.bootstrap(args, testConfigPath)
   }
 
@@ -113,7 +113,7 @@ class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "parallel copy" should "works" in {
-    val args = Array("par", "cp", "all", fileName)
+    val args = Array("pcp", "all", fileName)
 
     val in = new ByteArrayInputStream("y".getBytes)
     Console.withIn(in) {
@@ -132,7 +132,7 @@ class TestClusterTools extends AnyFlatSpec with Matchers with BeforeAndAfter {
   }
 
   "parallel sync" should "works" in {
-    val args = Array("par", "sync", "all", fileName)
+    val args = Array("psync", "all", fileName)
     ClusterTools.bootstrap(args, testConfigPath)
   }
 }

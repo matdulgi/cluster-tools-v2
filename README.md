@@ -12,7 +12,7 @@
 
 # Usage
 ``` bash
-cltls [par] <task> <group> [args]
+cltls <task> <group> [args]
 ```
 
 ### Task
@@ -21,9 +21,9 @@ cltls [par] <task> <group> [args]
 - cltls sync all 
 
 ### Parallel Task
-- cltls par cmd all ls -al
-- cltls par cp all ~/goodday.txt
-- cltls par sync all 
+- cltls pcmd all ls -al
+- cltls pcp all ~/goodday.txt
+- cltls psync all 
 
 ### Tools (developing)
 - cltls ssh key exchange

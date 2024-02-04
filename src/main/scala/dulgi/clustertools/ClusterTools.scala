@@ -32,18 +32,14 @@ object ClusterTools {
 
 
   def run(args: Array[String], globalConfig: Config): Unit = {
-    val (isParCmd, parProcessedArgs) = if(args.length == 0) throw new IllegalArgumentException("no argument")
-    else {
-      if(args(0) == "par") (true, args.tail)
-      else if (args(0) == "help") throw new HelpException
-      else (false, args)
-    }
+    if(args.length == 0) throw new IllegalArgumentException("no argument")
+    else if (args(0) == "help") throw new HelpException
 
-    val taskStr = if (parProcessedArgs.length < 1) throw new IllegalArgumentException("no task argument")
-    else parProcessedArgs(0)
+    val taskStr = if (args.length < 1) throw new IllegalArgumentException("no task argument")
+    else args(0)
 
-    val targetGroup = if (parProcessedArgs.length < 2) throw new IllegalArgumentException("no group argument")
-    else parProcessedArgs(1)
+    val targetGroup = if (args.length < 2) throw new IllegalArgumentException("no group argument")
+    else args(1)
 
     val targetHosts = try {
       globalConfig.groups(targetGroup)
@@ -59,13 +55,13 @@ object ClusterTools {
     }
 
     val tasks = filteredTargetNodes.map{ node =>
-      (isParCmd, taskStr) match {
-        case (false, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath)
-        case (false, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath)
-        case (false, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath)
-        case (true, "cmd") => new Command(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
-        case (true, "cp") => new Copy(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
-        case (true, "sync") => new Sync(node, parProcessedArgs.slice(2, parProcessedArgs.length), globalConfig.app.convertHomePath) with Parallelize
+      taskStr match {
+        case "cmd" => new Command(node, args.slice(2, args.length), globalConfig.app.convertHomePath)
+        case "cp" => new Copy(node, args.slice(2, args.length), globalConfig.app.convertHomePath)
+        case "sync" => new Sync(node, args.slice(2, args.length), globalConfig.app.convertHomePath)
+        case "pcmd" => new Command(node, args.slice(2, args.length), globalConfig.app.convertHomePath) with Parallelize
+        case "pcp" => new Copy(node, args.slice(2, args.length), globalConfig.app.convertHomePath) with Parallelize
+        case "psync" => new Sync(node, args.slice(2, args.length), globalConfig.app.convertHomePath) with Parallelize
         case _ => throw new IllegalArgumentException(s"wrong task: $taskStr")
       }
     }
@@ -73,20 +69,22 @@ object ClusterTools {
     if (taskStr == "cp" && globalConfig.app.seekInCopy) seekRemoteFile(tasks)
 
     tasks.foreach(_.onStart())
-    if (!isParCmd){
-      tasks.foreach{_.execute() match {
+    tasks.head match {
+      case _: Parallelize =>
+        val fl = tasks.map {
+          _.execute() match {
+            case r: ParallelTaskResult => r.future
+          }
+        }
+        val rl = Await.result(Future.sequence(fl), Duration.Inf)
+        rl.foreach(_.printFinishInfo())
+      case _ =>
+        tasks.foreach{_.execute() match {
           case r: SequentialTaskResult => r.printFinishInfo()
         }
       }
-    } else {
-      val fl = tasks.map{_.execute() match {
-        case r: ParallelTaskResult => r.future}
-      }
-      val rl = Await.result(Future.sequence(fl), Duration.Inf)
-      rl.foreach(_.printFinishInfo())
     }
     tasks.foreach(_.onFinish())
-
   }
 
   /**

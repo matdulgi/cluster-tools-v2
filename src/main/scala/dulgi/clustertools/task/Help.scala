@@ -21,10 +21,10 @@ case class Help(args: Array[String]) extends Task {
           |Cluster Tools - matdulgi
           |
           |# Usage
-          |cltls [par] <task> <group> [arguments]
+          |cltls <task> <group> [arguments]
           |
           |# Task
-          |( cmd | cp | sync )
+          |( cmd | cp | sync | pcmd | pcp | psync )
           |
           |# Examples
           |- cmd      ex ) cltls cmd all mkdir /opt/myfile/tmp
@@ -32,6 +32,11 @@ case class Help(args: Array[String]) extends Task {
           |                cltls cp /home/dulgi/tmp /home/dulgi/tmp
           |- sync     ex ) cltls sync .
           |                cltls sync /home/dulgi/tmp /home/dulgi/tmp
+          |- pcmd     ex ) cltls pcmd all mkdir /opt/myfile/tmp
+          |- pcp      ex ) cltls pcp /home/dulgi/tmp
+          |                cltls pcp /home/dulgi/tmp /home/dulgi/tmp
+          |- psync    ex ) cltls psync .
+          |                cltls psync /home/dulgi/tmp /home/dulgi/tmp
           |- help     ex ) cltls help
           |""".stripMargin
       case Array(args1) => "developing"
